@@ -1,0 +1,26 @@
+{
+    "cookiecutter": {
+        "codeowner_github_usernames": "automatic-carnival",
+        "full_name": "Marius Solaas, Lars M. Storvik, Gard Schive",
+        "email": "post@nhn.no",
+        "github_org": "NHN-SIU",
+        "app_name": "praksis_nhn_nautobot",
+        "verbose_name": "Praksis NHN Nautobot",
+        "app_slug": "praksis-nhn-nautobot",
+        "project_slug": "nautobot-app-praksis-nhn-nautobot",
+        "repo_url": "https://github.com/NHN-SIU/automatic-carnival",
+        "base_url": "praksis-nhn-nautobot",
+        "min_nautobot_version": "2.0.0",
+        "max_nautobot_version": "2.9999",
+        "camel_name": "PraksisNhnNautobot",
+        "project_short_description": "Nautobot application for NHN by Praksis student spring 2025",
+        "model_class_name": "NHNModel",
+        "open_source_license": "Not open source",
+        "docs_base_url": "https://docs.nautobot.com",
+        "docs_app_url": "https://docs.nautobot.com/projects/praksis-nhn-nautobot/en/latest",
+        "_template": "https://github.com/nautobot/cookiecutter-nautobot-app",
+        "_output_dir": "/Users/mariussolaas/automatic-carnival",
+        "_repo_dir": "/Users/mariussolaas/.cookiecutters/cookiecutter-nautobot-app/nautobot-app",
+        "_checkout": null
+    }
+}
