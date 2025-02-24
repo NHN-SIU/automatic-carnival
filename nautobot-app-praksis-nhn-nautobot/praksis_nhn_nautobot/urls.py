@@ -5,9 +5,7 @@ from django.urls import path
 from django.views.generic import RedirectView
 from nautobot.apps.urls import NautobotUIViewSetRouter
 
-
 from praksis_nhn_nautobot import views
-
 
 router = NautobotUIViewSetRouter()
 
