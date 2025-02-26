@@ -33,7 +33,7 @@ To clean up and start fresh:
     invoke build
     invoke db-import
     invoke start
-*Note*: The invoke db-import command requires a pre-existing database backup.
+*Note*: The invoke db-import command requires a pre-existing database backup. (Not necessary)
 
 ## Exporting the Current Database
 To export the current database state:

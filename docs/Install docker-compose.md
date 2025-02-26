@@ -11,3 +11,4 @@ I followed the **"Getting Started"** tutorial from the repository, with the foll
     - This ensures that MySQL is used as the database instead of PostgreSQL.
 These modifications adapt the installation to fit the project’s needs.
 
+In poetry.lock I added "package-mode = false". Poetry couldn't install dependencies without it, probably because I changed the directory name from nautobot-docker.compose to src
