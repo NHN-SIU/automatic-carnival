@@ -1,18 +1,25 @@
-"""API serializers for praksis_nhn_nautobot."""
+"""API serializers for praksis_nhn_nautobot.
+Forteller Django hvordan den tar JSON data og hvordan oversette
+det til en database-modell, eller omvendt. 
+"""
 
 from nautobot.apps.api import NautobotModelSerializer, TaggedModelSerializerMixin
 
 from praksis_nhn_nautobot import models
 
-
-class NHNModelSerializer(NautobotModelSerializer, TaggedModelSerializerMixin):  # pylint: disable=too-many-ancestors
-    """NHNModel Serializer."""
-
+class ParentNHNModelSerializer(NautobotModelSerializer):
+    """Simplified serializer for parent connections."""
+    
     class Meta:
-        """Meta attributes."""
+        model = models.NHNModel
+        fields = ['id', 'name']
 
+class NHNModelSerializer(NautobotModelSerializer):
+    """NHNModel serializer."""
+    
+    parents = ParentNHNModelSerializer(many=True, read_only=True)
+    children = ParentNHNModelSerializer(many=True, read_only=True)
+    
+    class Meta:
         model = models.NHNModel
         fields = "__all__"
-
-        # Option for disabling write for certain fields:
-        # read_only_fields = []

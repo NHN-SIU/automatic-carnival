@@ -1,0 +1,532 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Connection Hierarchy - {{ object }}{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">
+          Connection Hierarchy: {{ object }}
+        </h3>
+      </div>
+      <div class="panel-body">
+        <div class="btn-group">
+          <button class="btn btn-primary" id="showParents">Show Parents</button>
+          <button class="btn btn-default" id="showChildren">Show Children</button>
+          <button class="btn btn-default" id="showHierarchy">Show Complete Hierarchy</button>
+          <button class="btn btn-default" id="resetGraph">Reset</button>
+        </div>
+        <div class="btn-group pull-right">
+          <span class="btn btn-default disabled">Depth: </span>
+          <button class="btn btn-default depth-btn active" data-depth="1">1</button>
+          <button class="btn btn-default depth-btn" data-depth="2">2</button>
+          <button class="btn btn-default depth-btn" data-depth="3">3</button>
+        </div>
+      </div>
+      <div id="connection-graph" style="height: 600px; border: 1px solid #ddd; border-radius: 4px; padding: 10px; margin-top: 10px;"></div>
+      <div class="panel-footer">
+        <div class="legend">
+          <span class="badge" style="background-color: #3498db; margin-right: 10px;">Current Connection</span>
+          <span class="badge" style="background-color: #2ecc71; margin-right: 10px;">Parent Connection</span>
+          <span class="badge" style="background-color: #e74c3c; margin-right: 10px;">Child Connection</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://d3js.org/d3.v6.min.js"></script>
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const connectionId = "{{ object.pk }}";
+    let maxDepth = 1;
+    let currentGraph = null;
+    let currentMode = 'parents';
+    
+    // Helper function to validate numbers
+    function isValidNumber(value) {
+      return typeof value === 'number' && !isNaN(value) && isFinite(value);
+    }
+    
+    // Button handlers
+    document.getElementById('showParents').addEventListener('click', () => {
+      document.getElementById('showParents').className = 'btn btn-primary';
+      document.getElementById('showChildren').className = 'btn btn-default';
+      document.getElementById('showHierarchy').className = 'btn btn-default';
+      currentMode = 'parents';
+      fetchAndRenderGraph();
+    });
+    
+    document.getElementById('showChildren').addEventListener('click', () => {
+      document.getElementById('showParents').className = 'btn btn-default';
+      document.getElementById('showChildren').className = 'btn btn-primary';
+      document.getElementById('showHierarchy').className = 'btn btn-default';
+      currentMode = 'children';
+      fetchAndRenderGraph();
+    });
+    
+    document.getElementById('showHierarchy').addEventListener('click', () => {
+      document.getElementById('showParents').className = 'btn btn-default';
+      document.getElementById('showChildren').className = 'btn btn-default';
+      document.getElementById('showHierarchy').className = 'btn btn-primary';
+      currentMode = 'hierarchy';
+      fetchAndRenderGraph();
+    });
+    
+    document.getElementById('resetGraph').addEventListener('click', () => {
+      if (currentGraph) {
+        initializeGraph(currentGraph);
+      }
+    });
+    
+    // Depth buttons
+    const depthButtons = document.querySelectorAll('.depth-btn');
+    depthButtons.forEach(button => {
+      button.addEventListener('click', function() {
+        depthButtons.forEach(btn => btn.className = 'btn btn-default depth-btn');
+        this.className = 'btn btn-default depth-btn active';
+        maxDepth = parseInt(this.getAttribute('data-depth'));
+        fetchAndRenderGraph();
+      });
+    });
+    
+    function fetchAndRenderGraph() {
+      let endpoint = '';
+      switch(currentMode) {
+        case 'parents':
+          endpoint = `/api/plugins/praksis-nhn-nautobot/nhnmodel/${connectionId}/parents/?depth=${maxDepth}`;
+          break;
+        case 'children':
+          endpoint = `/api/plugins/praksis-nhn-nautobot/nhnmodel/${connectionId}/children/?depth=${maxDepth}`;
+          break;
+        case 'hierarchy':
+          endpoint = `/api/plugins/praksis-nhn-nautobot/nhnmodel/${connectionId}/hierarchy/?depth=${maxDepth}`;
+          break;
+      }
+    
+      fetch(endpoint)
+        .then(response => response.json())
+        .then(data => {
+          // Process the data and render the graph
+          const graphData = processApiData(data, currentMode);
+          console.log(graphData);
+          renderGraph(graphData);
+        })
+        .catch(error => {
+          console.error('Error fetching graph data:', error);
+          document.getElementById('connection-graph').innerHTML = 
+            `<div class="alert alert-danger">Error loading graph data: ${error.message}</div>`;
+        });
+    }
+    
+    function processApiData(data, mode) {
+      const nodes = [];
+      const links = [];
+      
+      // Add current connection as the root node
+      const rootNode = {
+        id: connectionId,
+        name: "{{ object }}",
+        sambandsnummer: "{{ object.sambandsnummer }}",
+        type: "current"
+      };
+      nodes.push(rootNode);
+      
+      if (mode === 'parents') {
+        if (data.parents) {
+          processParentData(data.parents, nodes, links, rootNode);
+        } else if (Array.isArray(data)) {
+          processParentData(data, nodes, links, rootNode);
+        }
+      } else if (mode === 'children') {
+        if (data.children) {
+          processChildData(data.children, nodes, links, rootNode);
+        } else if (Array.isArray(data)) {
+          processChildData(data, nodes, links, rootNode);
+        }
+      } else {
+        // For hierarchy mode
+        if (data.parent_tree) {
+          processParentData(data.parent_tree, nodes, links, rootNode);
+        }
+        if (data.child_tree) {
+          processChildData(data.child_tree, nodes, links, rootNode);
+        }
+        // If the data is not formatted with parent_tree/child_tree
+        if (data.parents) {
+          processParentData(data.parents, nodes, links, rootNode);
+        }
+        if (data.children) {
+          processChildData(data.children, nodes, links, rootNode);
+        }
+      }
+      
+      return { nodes, links };
+    }
+    
+    function processParentData(parentData, nodes, links, childNode) {
+      if (!parentData || !Array.isArray(parentData)) return;
+      
+      parentData.forEach(parent => {
+        // Ensure parent has an ID
+        if (!parent || !parent.id) return;
+        
+        // Check if node already exists
+        const existingNode = nodes.find(n => n.id === parent.id);
+        if (!existingNode) {
+          nodes.push({
+            id: parent.id,
+            name: parent.name || 'Unknown',
+            sambandsnummer: parent.sambandsnummer || '',
+            type: "parent"
+          });
+        }
+        
+        // Make sure childNode is valid and has an id
+        if (!childNode || !childNode.id) return;
+        
+        // Check if link already exists - handle both object and string references
+        const linkExists = links.some(l => {
+          if (typeof l.source === 'object' && typeof l.target === 'object') {
+            return (l.source.id === parent.id && l.target.id === childNode.id);
+          } else {
+            return (l.source === parent.id && l.target === childNode.id);
+          }
+        });
+        
+        if (!linkExists) {
+          links.push({
+            source: parent.id,
+            target: childNode.id,
+            type: "parent-child"
+          });
+        }
+        
+        // Recursively process parent's parents
+        if (parent.parents) {
+          processParentData(parent.parents, nodes, links, {
+            id: parent.id,
+            name: parent.name || 'Unknown',
+            sambandsnummer: parent.sambandsnummer || '',
+            type: "parent"
+          });
+        }
+      });
+    }
+    
+    function processChildData(childData, nodes, links, parentNode) {
+      if (!childData || !Array.isArray(childData)) return;
+      
+      childData.forEach(child => {
+        // Ensure child has an ID
+        if (!child || !child.id) return;
+        
+        // Check if node already exists
+        const existingNode = nodes.find(n => n.id === child.id);
+        if (!existingNode) {
+          nodes.push({
+            id: child.id,
+            name: child.name || 'Unknown',
+            sambandsnummer: child.sambandsnummer || '',
+            type: "child"
+          });
+        }
+        
+        // Make sure parentNode is valid and has an id
+        if (!parentNode || !parentNode.id) return;
+        
+        // Check if link already exists - handle both object and string references
+        const linkExists = links.some(l => {
+          if (typeof l.source === 'object' && typeof l.target === 'object') {
+            return (l.source.id === parentNode.id && l.target.id === child.id);
+          } else {
+            return (l.source === parentNode.id && l.target === child.id);
+          }
+        });
+        
+        if (!linkExists) {
+          links.push({
+            source: parentNode.id,
+            target: child.id,
+            type: "parent-child"
+          });
+        }
+        
+        // Recursively process child's children
+        if (child.children) {
+          processChildData(child.children, nodes, links, {
+            id: child.id,
+            name: child.name || 'Unknown',
+            sambandsnummer: child.sambandsnummer || '',
+            type: "child"
+          });
+        }
+      });
+    }
+    
+    function renderGraph(graphData) {
+      // Clear previous graph
+      document.getElementById('connection-graph').innerHTML = '';
+      
+      if (graphData.nodes.length <= 1) {
+        document.getElementById('connection-graph').innerHTML = 
+          '<div class="alert alert-info">No connections to display in the current view.</div>';
+        return;
+      }
+      
+      const width = document.getElementById('connection-graph').offsetWidth;
+      const height = document.getElementById('connection-graph').offsetHeight;
+      
+      // Create SVG
+      const svg = d3.select('#connection-graph')
+        .append('svg')
+        .attr('width', width)
+        .attr('height', height)
+        .style('overflow', 'visible'); // This helps prevent clipping
+      
+      // Create group for the graph
+      const g = svg.append('g');
+      
+      // Add zoom functionality
+      const zoom = d3.zoom()
+        .scaleExtent([0.1, 4])
+        .on('zoom', (event) => {
+          g.attr('transform', event.transform);
+        });
+      
+      svg.call(zoom);
+      
+      // Create the force simulation with improved forces
+      const simulation = d3.forceSimulation(graphData.nodes)
+        .force('link', d3.forceLink(graphData.links).id(d => d.id).distance(120))
+        .force('charge', d3.forceManyBody().strength(-800))
+        .force('center', d3.forceCenter(width / 2, height / 2))
+        .force('x', d3.forceX(width / 2).strength(0.1)) // Keep nodes centered horizontally
+        .force('y', d3.forceY(height / 2).strength(0.1)) // Keep nodes centered vertically
+        .force('collide', d3.forceCollide().radius(60).strength(1)); // Prevent overlap
+      
+      // Draw links
+      const link = g.append('g')
+        .attr('class', 'links')
+        .selectAll('line')
+        .data(graphData.links)
+        .enter().append('line')
+        .attr('stroke', '#999')
+        .attr('stroke-width', 1.5)
+        .attr('marker-end', 'url(#arrowhead)');
+      
+      // Define arrow marker
+      svg.append('defs').append('marker')
+        .attr('id', 'arrowhead')
+        .attr('viewBox', '0 -5 10 10')
+        .attr('refX', 30) // Adjust to move arrow away from node
+        .attr('refY', 0)
+        .attr('orient', 'auto')
+        .attr('markerWidth', 8)
+        .attr('markerHeight', 8)
+        .append('path')
+        .attr('d', 'M0,-5L10,0L0,5')
+        .attr('fill', '#999');
+      
+      // Create node groups
+      const node = g.append('g')
+        .attr('class', 'nodes')
+        .selectAll('.node')
+        .data(graphData.nodes)
+        .enter().append('g')
+        .attr('class', 'node')
+        .call(d3.drag()
+          .on('start', dragstarted)
+          .on('drag', dragged)
+          .on('end', dragended));
+      
+      // Add node circles
+      node.append('circle')
+        .attr('r', d => d.type === 'current' ? 30 : 25) // Make current node larger
+        .attr('fill', d => {
+          switch(d.type) {
+            case 'current': return '#3498db';
+            case 'parent': return '#2ecc71';
+            case 'child': return '#e74c3c';
+            default: return '#95a5a6';
+          }
+        })
+        .attr('stroke', d => d.type === 'current' ? '#fff' : '#ddd')
+        .attr('stroke-width', d => d.type === 'current' ? 3 : 2);
+      
+      // Add node labels
+      node.append('text')
+        .text(d => {
+          const name = d.name || '';
+          const words = name.split(' ');
+          return words.length > 0 ? words[0] : '';
+        })
+        .attr('text-anchor', 'middle')
+        .attr('dy', 4)
+        .attr('fill', '#fff')
+        .style('font-size', d => d.type === 'current' ? '12px' : '10px')
+        .style('font-weight', d => d.type === 'current' ? 'bold' : 'normal');
+      
+      // Add sambandsnummer below
+      node.append('text')
+        .text(d => d.sambandsnummer || '')
+        .attr('text-anchor', 'middle')
+        .attr('dy', d => d.type === 'current' ? 40 : 35)
+        .attr('fill', '#333')
+        .style('font-size', '10px');
+      
+      // Add tooltips
+      node.append('title')
+        .text(d => `${d.name || ''}\nID: ${d.sambandsnummer || 'N/A'}`);
+      
+      // Handle node clicking
+      node.on('click', function(event, d) {
+        if (d.id !== connectionId) {
+          window.location.href = `/plugins/praksis-nhn-nautobot/nhnmodel/${d.id}/graph/`;
+        }
+      });
+      
+      // Update positions on each tick
+      simulation.on('tick', () => {
+        // Fix any NaN positions first
+        graphData.nodes.forEach(d => {
+          // If position is NaN, reset to center with some randomness
+          if (!isValidNumber(d.x) || !isValidNumber(d.y)) {
+            d.x = width / 2 + (Math.random() - 0.5) * 100;
+            d.y = height / 2 + (Math.random() - 0.5) * 100;
+          }
+          
+          // Add padding to keep nodes visible
+          const padding = 30;
+          d.x = Math.max(padding, Math.min(width - padding, d.x));
+          d.y = Math.max(padding, Math.min(height - padding, d.y));
+        });
+        
+        // Update link positions with safe coordinates
+        link
+          .attr('x1', d => isValidNumber(d.source.x) ? d.source.x : width/2)
+          .attr('y1', d => isValidNumber(d.source.y) ? d.source.y : height/2)
+          .attr('x2', d => isValidNumber(d.target.x) ? d.target.x : width/2)
+          .attr('y2', d => isValidNumber(d.target.y) ? d.target.y : height/2);
+        
+        // Update node positions with safe coordinates
+        node.attr('transform', d => {
+          const x = isValidNumber(d.x) ? d.x : width/2;
+          const y = isValidNumber(d.y) ? d.y : height/2;
+          return `translate(${x}, ${y})`;
+        });
+      });
+      
+      currentGraph = {
+        nodes: graphData.nodes,
+        links: graphData.links,
+        simulation: simulation
+      };
+      
+      // Apply initial positions - radial layout
+      initializeGraph(currentGraph);
+      
+      function dragstarted(event) {
+        if (!event.active) simulation.alphaTarget(0.3).restart();
+        event.subject.fx = event.subject.x;
+        event.subject.fy = event.subject.y;
+      }
+      
+      function dragged(event) {
+        event.subject.fx = event.x;
+        event.subject.fy = event.y;
+      }
+      
+      function dragended(event) {
+        if (!event.active) simulation.alphaTarget(0);
+        // Don't release the current node
+        if (event.subject.id !== connectionId) {
+          event.subject.fx = null;
+          event.subject.fy = null;
+        }
+      }
+    }
+    
+    function initializeGraph(graph) {
+      if (!graph || !graph.simulation) return;
+      
+      const width = document.getElementById('connection-graph').offsetWidth;
+      const height = document.getElementById('connection-graph').offsetHeight;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      
+      // Reset node positions and set initial positions in a circle to prevent NaN issues
+      graph.nodes.forEach((node, i) => {
+        const angle = (2 * Math.PI * i) / graph.nodes.length;
+        const radius = Math.min(width, height) * 0.2; // Smaller initial circle
+        
+        // Set initial positions to prevent NaN
+        node.x = centerX + radius * Math.cos(angle);
+        node.y = centerY + radius * Math.sin(angle);
+        
+        // Reset velocity and fixed position
+        node.vx = 0;
+        node.vy = 0;
+        node.fx = null;
+        node.fy = null;
+      });
+      
+      // Find the current node
+      const currentNode = graph.nodes.find(n => n.id === connectionId);
+      
+      if (currentNode) {
+        // Place current node in center
+        currentNode.fx = centerX;
+        currentNode.fy = centerY;
+        
+        // Separate parents and children
+        const parents = graph.nodes.filter(n => n.type === 'parent');
+        const children = graph.nodes.filter(n => n.type === 'child');
+        
+        // Place parents above in a semi-circle
+        if (parents.length > 0) {
+          const radius = Math.min(width, height) * 0.3;
+          parents.forEach((node, i) => {
+            const angle = (Math.PI * (i + 1)) / (parents.length + 1);
+            node.x = centerX + radius * Math.cos(angle);
+            node.y = centerY - radius * Math.sin(angle);
+          });
+        }
+        
+        // Place children below in a semi-circle
+        if (children.length > 0) {
+          const radius = Math.min(width, height) * 0.3;
+          children.forEach((node, i) => {
+            const angle = Math.PI + (Math.PI * (i + 1)) / (children.length + 1);
+            node.x = centerX + radius * Math.cos(angle);
+            node.y = centerY - radius * Math.sin(angle);
+          });
+        }
+      }
+      
+      // Verify no NaN positions and fix if needed
+      graph.nodes.forEach(node => {
+        if (!isValidNumber(node.x) || !isValidNumber(node.y)) {
+          node.x = centerX + (Math.random() - 0.5) * 100;
+          node.y = centerY + (Math.random() - 0.5) * 100;
+        }
+      });
+      
+      // Restart the simulation with high alpha for better initial layout
+      graph.simulation.alpha(1).restart();
+      
+      // Lock the current node position permanently
+      if (currentNode) {
+        currentNode.fx = centerX;
+        currentNode.fy = centerY;
+      }
+    }
+    
+    // Initial load
+    fetchAndRenderGraph();
+  });
+</script>
+{% endblock %}
