@@ -11,6 +11,7 @@ from nautobot.core.settings_funcs import is_truthy, parse_redis_connection
 # Debug
 #
 
+
 DEBUG = is_truthy(os.getenv("NAUTOBOT_DEBUG", False))
 
 TESTING = len(sys.argv) > 1 and sys.argv[1] == "test"
@@ -42,3 +43,7 @@ PLUGINS = []
 PLUGINS_CONFIG = {
     "nautobot_example_plugin": {},
 }
+
+# Change jobs directory
+JOBS_ROOT = "/opt/nautobot/jobs"
+

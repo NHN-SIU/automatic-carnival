@@ -23,6 +23,7 @@ RUN apt-get update && \
 
 COPY ../pyproject.toml ../poetry.lock /source/
 COPY ../plugins /source/plugins
+#COPY -../jobs /source/jobs
 # COPY ../packages /source/packages
 
 # Install the nautobot project to include Nautobot

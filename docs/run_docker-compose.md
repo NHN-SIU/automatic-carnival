@@ -10,7 +10,7 @@ To run the program, create a virtual environment using Poetry:
 
     poetry shell
     poetry lock
-    poetry install
+    poetry install --no-root
 
 Note: The invoke tool is included during the poetry install process; no separate installation is required.
 
@@ -25,6 +25,7 @@ Alternatively, to view container logs in real-time:
     invoke debug
 
 **Note**: Exiting debug mode will stop all running containers.
+**Note**: You may have to wait a bit for the container to connect to the port
 
 ## Resetting the Environment
 To clean up and start fresh:
