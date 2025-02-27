@@ -15,7 +15,8 @@ class SambandTable(BaseTable):
     actions = ButtonsColumn(
         models.Samband,
         # Option for modifying the default action buttons on each row:
-        # buttons=("changelog", "edit", "delete"),
+        buttons=("changelog", "edit", "delete"),
+        
         # Option for modifying the pk for the action buttons:
         pk_field="pk",
     )
@@ -27,12 +28,10 @@ class SambandTable(BaseTable):
         fields = (
             "pk",
             "name",
-            "description",
         )
 
         # Option for modifying the columns that show up in the list view by default:
-        # default_columns = (
-        #     "pk",
-        #     "name",
-        #     "description",
-        # )
+        default_columns = (
+            "pk",
+            "name",
+        )

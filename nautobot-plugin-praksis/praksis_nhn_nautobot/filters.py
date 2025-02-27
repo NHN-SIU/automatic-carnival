@@ -14,4 +14,4 @@ class SambandFilterSet(NautobotFilterSet, NameSearchFilterSet):  # pylint: disab
         model = models.Samband
 
         # add any fields from the model that you would like to filter your searches by using those
-        fields = ["id", "name", "description"]
+        fields = ["id", "name"]
