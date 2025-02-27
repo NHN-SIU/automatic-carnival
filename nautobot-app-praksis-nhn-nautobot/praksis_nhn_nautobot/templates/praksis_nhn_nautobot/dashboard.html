@@ -1,0 +1,81 @@
+{% extends 'base.html' %}
+{% load helpers %}
+
+{% block header %}
+<h1>{% block title %}NHN Dashboard{% endblock %}</h1>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <strong>NHN Connections</strong>
+            </div>
+            <div class="list-group">
+                <a href="{% url 'plugins:praksis_nhn_nautobot:nhnmodel_list' %}" class="list-group-item">
+                    <h4 class="list-group-item-heading">All Connections</h4>
+                    <p class="list-group-item-text">Manage Norwegian Health Network connections</p>
+                </a>
+                <a href="{% url 'plugins:praksis_nhn_nautobot:nhnmodel_add' %}" class="list-group-item">
+                    <h4 class="list-group-item-heading">Add New Connection</h4>
+                    <p class="list-group-item-text">Create a new NHN connection</p>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <strong>Connection Analytics</strong>
+            </div>
+            <div class="list-group">
+                <a href="{% url 'plugins:praksis_nhn_nautobot:nhnmodel_list' %}" class="list-group-item">
+                    <h4 class="list-group-item-heading">Connection Statistics</h4>
+                    <p class="list-group-item-text">View detailed connection statistics</p>
+                </a>
+                {% if has_graph_view %}
+                <a href="{% url 'plugins:praksis_nhn_nautobot:nhnmodel_graph' pk=example_id %}" class="list-group-item">
+                    <h4 class="list-group-item-heading">Connection Graph</h4>
+                    <p class="list-group-item-text">Visualize connection hierarchy</p>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <strong>Recent Activity</strong>
+            </div>
+            <div class="panel-body">
+                <table class="table table-hover">
+                    <thead>
+                        <tr>
+                            <th>Connection</th>
+                            <th>Status</th>
+                            <th>Last Updated</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for connection in recent_connections %}
+                        <tr>
+                            <td><a href="{% url 'plugins:praksis_nhn_nautobot:nhnmodel' pk=connection.pk %}">{{ connection.name }}</a></td>
+                            <td>{{ connection.status }}</td>
+                            <td>{{ connection.last_updated }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="3">No recent connections</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

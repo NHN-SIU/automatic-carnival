@@ -1,0 +1,83 @@
+<div class="row">
+    <div class="col-md-4 text-center">
+      <div class="well">
+        <span class="text-muted">Total Connections</span>
+        <h2>{{ connections|length }}</h2>
+      </div>
+    </div>
+    <div class="col-md-4 text-center">
+      <div class="well">
+        <span class="text-muted">Active Connections</span>
+        <h2>{{ connections.filter(status='active')|length }}</h2>
+      </div>
+    </div>
+    <div class="col-md-4 text-center">
+      <div class="well">
+        <span class="text-muted">Locations</span>
+        <h2>{{ connections.values_list('location', flat=True).distinct|length }}</h2>
+      </div>
+    </div>
+  </div>
+  
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <strong>Recent Connections</strong>
+    </div>
+    <table class="table table-hover panel-body">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Location</th>
+          <th>Status</th>
+          <th>Parents</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for connection in connections|dictsort:"name"|slice:":5" %}
+          <tr>
+            <td>
+              <a href="{% url 'plugins:praksis_nhn_nautobot:nhnmodel' connection.pk %}">
+                {{ connection.name }}
+              </a>
+            </td>
+            <td>{{ connection.location|default:"—" }}</td>
+            <td>
+              {% if connection.status == 'active' %}
+                <span class="label label-success">Active</span>
+              {% elif connection.status == 'planned' %}
+                <span class="label label-info">Planned</span>
+              {% elif connection.status == 'offline' %}
+                <span class="label label-danger">Offline</span>
+              {% elif connection.status == 'maintenance' %}
+                <span class="label label-warning">Maintenance</span>
+              {% else %}
+                <span class="label label-default">{{ connection.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% for parent in connection.parents.all|slice:":3" %}
+                <a href="{% url 'plugins:praksis_nhn_nautobot:nhnmodel' parent.pk %}" class="label label-primary">
+                  {{ parent.name }}
+                </a>
+                {% if not forloop.last %}&nbsp;{% endif %}
+              {% empty %}
+                <span class="text-muted">None</span>
+              {% endfor %}
+              {% if connection.parents.all.count > 3 %}
+                <span class="label label-default">+{{ connection.parents.all.count|add:"-3" }}</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="4" class="text-muted">No connections defined yet</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="panel-footer text-right">
+      <a href="{% url 'plugins:praksis_nhn_nautobot:nhnmodel_list' %}" class="btn btn-xs btn-primary">
+        View All Connections
+      </a>
+    </div>
+  </div>

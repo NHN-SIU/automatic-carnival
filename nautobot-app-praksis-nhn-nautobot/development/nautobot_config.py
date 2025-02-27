@@ -123,7 +123,7 @@ PLUGINS = ["praksis_nhn_nautobot"]
 
 # Apps configuration settings. These settings are used by various Apps that the user may have installed.
 # Each key in the dictionary is the name of an installed App and its value is a dictionary of settings.
-PLUGINS_CONFIG = {
-    'praksis_nhn_nautobot': {
-    }
-}
+# PLUGINS_CONFIG = {
+#     'praksis_nhn_nautobot': {
+#     }
+# }

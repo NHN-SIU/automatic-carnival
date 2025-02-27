@@ -24,5 +24,4 @@ class PraksisNhnNautobotConfig(NautobotAppConfig):
     caching_config = {}
     docs_view_name = "plugins:praksis_nhn_nautobot:docs"
 
-
 config = PraksisNhnNautobotConfig  # pylint:disable=invalid-name

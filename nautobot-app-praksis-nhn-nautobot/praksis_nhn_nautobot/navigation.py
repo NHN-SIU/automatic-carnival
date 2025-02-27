@@ -4,8 +4,13 @@ from nautobot.apps.ui import NavMenuAddButton, NavMenuGroup, NavMenuItem, NavMen
 
 items = (
     NavMenuItem(
+        link="plugins:praksis_nhn_nautobot:dashboard",
+        name="Dashboard",
+        permissions=["praksis_nhn_nautobot.view_nhnmodel"],
+    ),
+    NavMenuItem(
         link="plugins:praksis_nhn_nautobot:nhnmodel_list",
-        name="Praksis NHN Nautobot",
+        name="Se samband",
         permissions=["praksis_nhn_nautobot.view_nhnmodel"],
         buttons=(
             NavMenuAddButton(

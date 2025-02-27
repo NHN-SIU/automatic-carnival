@@ -13,10 +13,43 @@ class NHNModelTable(BaseTable):
 
     pk = ToggleColumn()
     name = tables.Column(linkify=True)
-    status = tables.Column()
+
+    status = tables.TemplateColumn(
+        template_code="""
+        {% if record.status == 'Active' %}
+            <span class="label label-success">Active</span>
+        {% elif record.status == 'planned' %}
+            <span class="label label-info">Planned</span>
+        {% elif record.status == 'offline' %}
+            <span class="label label-danger">Offline</span>
+        {% elif record.status == 'maintenance' %}
+            <span class="label label-warning">Maintenance</span>
+        {% else %}
+            <span class="label label-default">{{ record.status }}</span>
+        {% endif %}
+        """,
+        verbose_name="Status"
+    )
+    
     location = tables.Column()
     bandwidth_string = tables.Column(verbose_name="Bandwidth")
     sambandsnummer = tables.Column(verbose_name="Connection ID")
+    
+    # Custom template for parent connections with badges
+    parents = tables.TemplateColumn(
+        template_code="""
+        {% for parent in record.parents.all %}
+            <a href="{% url 'plugins:praksis_nhn_nautobot:nhnmodel' parent.pk %}" class="label label-primary">
+                {{ parent }}
+            </a>
+            {% if not forloop.last %}&nbsp;{% endif %}
+        {% empty %}
+            <span class="text-muted">None</span>
+        {% endfor %}
+        """,
+        verbose_name="Parent Connections"
+    )
+    
     actions = ButtonsColumn(
         models.NHNModel,
         # Option for modifying the default action buttons on each row:
@@ -47,6 +80,7 @@ class NHNModelTable(BaseTable):
             "bandwidth_string",
             "sambandsnummer",
             "parents",
+            "graph",
             "actions"
         )
 
@@ -59,6 +93,7 @@ class NHNModelTable(BaseTable):
             "bandwidth_string",
             "sambandsnummer",
             "parents",
+            "graph",
             "actions"
         )
 
