@@ -49,104 +49,99 @@ jobs:
       uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
+
+    - name: Install Poetry
+      uses: snok/install-poetry@v1
+      with:
+        virtualenvs-create: true
+        virtualenvs-in-project: true
     
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install nautobot
-        pip install -e .
-        pip install -r requirements-dev.txt
+        poetry install --no-interaction
     
-    - name: Set up Nautobot configuration
+    - name: Setup development environment
       run: |
-        echo "# Generated Nautobot configuration for testing" > nautobot_config.py
-        echo "import os" >> nautobot_config.py
-        echo "import sys" >> nautobot_config.py
+        # Create development directory
+        mkdir -p development
         
-        # Essential paths
-        echo "BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))" >> nautobot_config.py
-        echo "MEDIA_ROOT = os.path.join(BASE_DIR, 'media')" >> nautobot_config.py
-        echo "REPORTS_ROOT = os.path.join(BASE_DIR, 'reports')" >> nautobot_config.py
-        echo "SCRIPTS_ROOT = os.path.join(BASE_DIR, 'scripts')" >> nautobot_config.py
-        echo "GIT_ROOT = os.path.join(BASE_DIR, 'git')" >> nautobot_config.py
+        # Create simple test configuration
+        cat > development/nautobot_config.py << 'EOF'
+        # Nautobot test configuration
+        import os
+        import sys
 
-        # Required settings
-        echo "ALLOWED_HOSTS = ['*']" >> nautobot_config.py
-        echo "SECRET_KEY = 'test-secret-key'" >> nautobot_config.py
-        
+        # Basic settings
+        ALLOWED_HOSTS = ["*"]
+        SECRET_KEY = "test-key-for-ci"
+
         # Database settings
-        echo "DATABASES = {" >> nautobot_config.py
-        echo "    'default': {" >> nautobot_config.py
-        echo "        'NAME': 'nautobot'," >> nautobot_config.py
-        echo "        'USER': 'nautobot'," >> nautobot_config.py
-        echo "        'PASSWORD': 'nautobot'," >> nautobot_config.py
-        echo "        'HOST': 'localhost'," >> nautobot_config.py
-        echo "        'PORT': '5432'," >> nautobot_config.py
-        echo "        'ENGINE': 'django.db.backends.postgresql'" >> nautobot_config.py
-        echo "    }" >> nautobot_config.py
-        echo "}" >> nautobot_config.py
-        
+        DATABASES = {
+            "default": {
+                "NAME": "nautobot",
+                "USER": "nautobot",
+                "PASSWORD": "nautobot",
+                "HOST": "localhost",
+                "PORT": 5432,
+                "ENGINE": "django.db.backends.postgresql",
+            }
+        }
+
         # Redis settings
-        echo "REDIS = {" >> nautobot_config.py
-        echo "    'tasks': {" >> nautobot_config.py
-        echo "        'HOST': 'localhost'," >> nautobot_config.py
-        echo "        'PORT': 6379," >> nautobot_config.py
-        echo "        'PASSWORD': ''," >> nautobot_config.py
-        echo "        'DATABASE': 0," >> nautobot_config.py
-        echo "        'SSL': False" >> nautobot_config.py
-        echo "    }," >> nautobot_config.py
-        echo "    'caching': {" >> nautobot_config.py
-        echo "        'HOST': 'localhost'," >> nautobot_config.py
-        echo "        'PORT': 6379," >> nautobot_config.py
-        echo "        'PASSWORD': ''," >> nautobot_config.py
-        echo "        'DATABASE': 1," >> nautobot_config.py
-        echo "        'SSL': False" >> nautobot_config.py
-        echo "    }" >> nautobot_config.py
-        echo "}" >> nautobot_config.py
-        
-        # Plugin settings
-        echo "PLUGINS = ['praksis_nhn_nautobot']" >> nautobot_config.py
-        echo "PLUGINS_CONFIG = {}" >> nautobot_config.py
-        
-        # Create required directories
-        echo "os.makedirs(MEDIA_ROOT, exist_ok=True)" >> nautobot_config.py
-        echo "os.makedirs(REPORTS_ROOT, exist_ok=True)" >> nautobot_config.py
-        echo "os.makedirs(SCRIPTS_ROOT, exist_ok=True)" >> nautobot_config.py
-        echo "os.makedirs(GIT_ROOT, exist_ok=True)" >> nautobot_config.py
-    
-    - name: Create directories
-      run: |
-        mkdir -p media reports scripts git
-    
-    - name: Check configuration
-      run: |
-        export NAUTOBOT_ROOT=$(pwd)
-        export NAUTOBOT_CONFIG=nautobot_config.py
-        nautobot-server check
-    
-    - name: Run migrations
-      run: |
-        export NAUTOBOT_ROOT=$(pwd)
-        export NAUTOBOT_CONFIG=nautobot_config.py
-        nautobot-server migrate
-    
+        REDIS = {
+            "tasks": {
+                "HOST": "localhost",
+                "PORT": 6379,
+                "PASSWORD": "",
+                "DATABASE": 0,
+                "SSL": False,
+            },
+            "caching": {
+                "HOST": "localhost",
+                "PORT": 6379,
+                "PASSWORD": "",
+                "DATABASE": 1,
+                "SSL": False,
+            }
+        }
+
+        # Create directories
+        BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        for dirname in ["media", "static", "reports", "scripts", "git", "jobs", "logs"]:
+            os.makedirs(os.path.join(BASE_DIR, dirname), exist_ok=True)
+
+        # Set paths
+        MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+        STATIC_ROOT = os.path.join(BASE_DIR, "static")
+        REPORTS_ROOT = os.path.join(BASE_DIR, "reports")
+        SCRIPTS_ROOT = os.path.join(BASE_DIR, "scripts")
+        GIT_ROOT = os.path.join(BASE_DIR, "git")
+        JOBS_ROOT = os.path.join(BASE_DIR, "jobs")
+        LOG_DIR = os.path.join(BASE_DIR, "logs")
+
+        # Enable the plugin
+        PLUGINS = ["praksis_nhn_nautobot"]
+        PLUGINS_CONFIG = {}
+        EOF
+
     - name: Run tests
       run: |
         export NAUTOBOT_ROOT=$(pwd)
-        export NAUTOBOT_CONFIG=nautobot_config.py
-        nautobot-server test praksis_nhn_nautobot
+        export NAUTOBOT_CONFIG=development/nautobot_config.py
+        
+        # Run migrations and tests through Poetry
+        poetry run nautobot-server migrate
+        poetry run nautobot-server test praksis_nhn_nautobot
     
     - name: Generate coverage report
       run: |
-        pip install pytest-cov
         export NAUTOBOT_ROOT=$(pwd)
-        export NAUTOBOT_CONFIG=nautobot_config.py
-        pytest --cov=praksis_nhn_nautobot praksis_nhn_nautobot/tests/
-        coverage xml
+        export NAUTOBOT_CONFIG=development/nautobot_config.py
+        poetry run pytest --cov=praksis_nhn_nautobot praksis_nhn_nautobot/tests/
+        poetry run coverage xml
     
     - name: Run linting
       run: |
-        pip install black flake8 pylint
-        black --check praksis_nhn_nautobot
-        flake8 praksis_nhn_nautobot
-        pylint --disable=all --enable=unused-import praksis_nhn_nautobot
+        poetry run black --check praksis_nhn_nautobot
+        poetry run flake8 praksis_nhn_nautobot
+        poetry run pylint --disable=all --enable=unused-import praksis_nhn_nautobot
