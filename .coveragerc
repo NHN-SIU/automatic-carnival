@@ -1,0 +1,11 @@
+[run]
+source = praksis_nhn_nautobot
+omit = 
+    praksis_nhn_nautobot/migrations/*
+    praksis_nhn_nautobot/tests/*
+
+[report]
+exclude_lines =
+    pragma: no cover
+    def __repr__
+    def __str__

@@ -1,0 +1,114 @@
+name: Test Nautobot Plugin
+
+on:
+  push:
+    branches: [ main, dev ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]  # Adjust based on Nautobot compatibility
+
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: nautobot
+          POSTGRES_PASSWORD: nautobot
+          POSTGRES_DB: nautobot
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      redis:
+        image: redis:6
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install nautobot
+        pip install -e .
+        pip install -r requirements-dev.txt
+    
+    - name: Set up Nautobot configuration
+      run: |
+        echo "# Generated Nautobot configuration for testing" > nautobot_config.py
+        echo "import os" >> nautobot_config.py
+        echo "ALLOWED_HOSTS = ['*']" >> nautobot_config.py
+        echo "DATABASE = {" >> nautobot_config.py
+        echo "    'NAME': 'nautobot'," >> nautobot_config.py
+        echo "    'USER': 'nautobot'," >> nautobot_config.py
+        echo "    'PASSWORD': 'nautobot'," >> nautobot_config.py
+        echo "    'HOST': 'localhost'," >> nautobot_config.py
+        echo "    'PORT': '5432'" >> nautobot_config.py
+        echo "}" >> nautobot_config.py
+        echo "REDIS = {" >> nautobot_config.py
+        echo "    'tasks': {" >> nautobot_config.py
+        echo "        'HOST': 'localhost'," >> nautobot_config.py
+        echo "        'PORT': 6379," >> nautobot_config.py
+        echo "        'PASSWORD': ''," >> nautobot_config.py
+        echo "        'DATABASE': 0," >> nautobot_config.py
+        echo "        'SSL': False" >> nautobot_config.py
+        echo "    }" >> nautobot_config.py
+        echo "}" >> nautobot_config.py
+        echo "PLUGINS = ['praksis_nhn_nautobot']" >> nautobot_config.py
+        echo "SECRET_KEY = 'test-secret-key'" >> nautobot_config.py
+    
+    - name: Check configuration
+      run: |
+        export NAUTOBOT_ROOT=$(pwd)
+        export NAUTOBOT_CONFIG=nautobot_config.py
+        nautobot-server check
+    
+    - name: Run migrations
+      run: |
+        export NAUTOBOT_ROOT=$(pwd)
+        export NAUTOBOT_CONFIG=nautobot_config.py
+        nautobot-server migrate
+    
+    - name: Run tests
+      run: |
+        export NAUTOBOT_ROOT=$(pwd)
+        export NAUTOBOT_CONFIG=nautobot_config.py
+        nautobot-server test praksis_nhn_nautobot
+    
+    - name: Run linting
+      run: |
+        pip install black flake8 pylint
+        black --check praksis_nhn_nautobot
+        flake8 praksis_nhn_nautobot
+        pylint --disable=all --enable=unused-import praksis_nhn_nautobot
+
+    - name: Generate coverage report
+      run: |
+        pip install pytest-cov
+        export NAUTOBOT_ROOT=$(pwd)
+        export NAUTOBOT_CONFIG=nautobot_config.py
+        # This will use .coveragerc automatically
+        pytest --cov=praksis_nhn_nautobot praksis_nhn_nautobot/tests/
+        
+        # Generate XML report for Codecov (if you're using it)
+        coverage xml
