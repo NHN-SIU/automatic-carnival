@@ -19,6 +19,10 @@ env:
 jobs:
   ruff-format:
     runs-on: "ubuntu-22.04"
+    defaults:
+      run:
+        working-directory: nautobot-plugin-praksis
+
     env:
       INVOKE_PRAKSIS_NHN_NAUTOBOT_LOCAL: "True"
     steps:
