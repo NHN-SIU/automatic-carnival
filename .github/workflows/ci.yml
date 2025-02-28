@@ -8,6 +8,7 @@ on: # yamllint disable-line rule:truthy rule:comments
     branches:
       - "main"
       - "develop"
+      - "6-undersøke-testing-med-nautobot-django"
     tags:
       - "v*"
   pull_request: ~
