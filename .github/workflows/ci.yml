@@ -8,7 +8,6 @@ on: # yamllint disable-line rule:truthy rule:comments
     branches:
       - "main"
       - "develop"
-      - "6-undersøke-testing-med-nautobot-django"
     tags:
       - "v*"
   pull_request: ~
@@ -19,9 +18,6 @@ env:
 jobs:
   ruff-format:
     runs-on: "ubuntu-22.04"
-    defaults:
-      run:
-        working-directory: nautobot-plugin-praksis
     env:
       INVOKE_PRAKSIS_NHN_NAUTOBOT_LOCAL: "True"
     steps:
@@ -31,7 +27,6 @@ jobs:
         uses: "networktocode/gh-action-setup-poetry-environment@v6"
         with:
           poetry-version: "1.8.5"
-          working-directory: "nautobot-plugin-praksis"
       - name: "Linting: ruff format"
         run: "poetry run invoke ruff --action format"
   ruff-lint:
@@ -45,7 +40,6 @@ jobs:
         uses: "networktocode/gh-action-setup-poetry-environment@v6"
         with:
           poetry-version: "1.8.5"
-          working-directory: "nautobot-plugin-praksis"
       - name: "Linting: ruff"
         run: "poetry run invoke ruff --action lint"
   check-docs-build:
@@ -59,7 +53,6 @@ jobs:
         uses: "networktocode/gh-action-setup-poetry-environment@v6"
         with:
           poetry-version: "1.8.5"
-          working-directory: "nautobot-plugin-praksis"
       - name: "Check Docs Build"
         run: "poetry run invoke build-and-check-docs"
   poetry:
@@ -86,7 +79,6 @@ jobs:
         uses: "networktocode/gh-action-setup-poetry-environment@v6"
         with:
           poetry-version: "1.8.5"
-          working-directory: "nautobot-plugin-praksis"
       - name: "Linting: yamllint"
         run: "poetry run invoke yamllint"
   check-in-docker:
@@ -111,7 +103,6 @@ jobs:
         uses: "networktocode/gh-action-setup-poetry-environment@v6"
         with:
           poetry-version: "1.8.5"
-          working-directory: "nautobot-plugin-praksis"
       - name: "Constrain Nautobot version and regenerate lock file"
         env:
           INVOKE_PRAKSIS_NHN_NAUTOBOT_LOCAL: "true"
@@ -169,7 +160,6 @@ jobs:
         uses: "networktocode/gh-action-setup-poetry-environment@v6"
         with:
           poetry-version: "1.8.5"
-          working-directory: "nautobot-plugin-praksis"
       - name: "Constrain Nautobot version and regenerate lock file"
         env:
           INVOKE_PRAKSIS_NHN_NAUTOBOT_LOCAL: "true"
@@ -213,7 +203,6 @@ jobs:
         uses: "networktocode/gh-action-setup-poetry-environment@v6"
         with:
           poetry-version: "1.8.5"
-          working-directory: "nautobot-plugin-praksis"
       - name: "Check for changelog entry"
         run: |
           git fetch --no-tags origin +refs/heads/${{ github.base_ref }}:refs/remotes/origin/${{ github.base_ref }}
@@ -233,7 +222,6 @@ jobs:
         uses: "actions/setup-python@v5"
         with:
           python-version: "3.12"
-          working-directory: "nautobot-plugin-praksis"
       - name: "Install Python Packages"
         run: "pip install poetry"
       - name: "Set env"
@@ -269,7 +257,6 @@ jobs:
         uses: "actions/setup-python@v5"
         with:
           python-version: "3.12"
-          working-directory: "nautobot-plugin-praksis"
       - name: "Install Python Packages"
         run: "pip install poetry"
       - name: "Set env"
