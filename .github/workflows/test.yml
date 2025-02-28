@@ -2,7 +2,7 @@ name: Test Nautobot Plugin
 
 on:
   push:
-    branches: [ main, dev, 6-undersøke-testing-med-nautobot-django ]
+    branches: [ main, dev, '6-undersøke-testing-med-nautobot-django' ]
   pull_request:
     branches: [ main ]
 
@@ -10,12 +10,12 @@ jobs:
   test:
     runs-on: ubuntu-latest
     defaults:
-        run:
-            working-directory: nautobot-plugin-praksis
-            
+      run:
+        working-directory: nautobot-plugin-praksis
+    
     strategy:
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]  # Adjust based on Nautobot compatibility
+        python-version: ["3.8", "3.9", "3.10"]
 
     services:
       postgres:
@@ -61,14 +61,32 @@ jobs:
       run: |
         echo "# Generated Nautobot configuration for testing" > nautobot_config.py
         echo "import os" >> nautobot_config.py
+        echo "import sys" >> nautobot_config.py
+        
+        # Essential paths
+        echo "BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))" >> nautobot_config.py
+        echo "MEDIA_ROOT = os.path.join(BASE_DIR, 'media')" >> nautobot_config.py
+        echo "REPORTS_ROOT = os.path.join(BASE_DIR, 'reports')" >> nautobot_config.py
+        echo "SCRIPTS_ROOT = os.path.join(BASE_DIR, 'scripts')" >> nautobot_config.py
+        echo "GIT_ROOT = os.path.join(BASE_DIR, 'git')" >> nautobot_config.py
+
+        # Required settings
         echo "ALLOWED_HOSTS = ['*']" >> nautobot_config.py
-        echo "DATABASE = {" >> nautobot_config.py
-        echo "    'NAME': 'nautobot'," >> nautobot_config.py
-        echo "    'USER': 'nautobot'," >> nautobot_config.py
-        echo "    'PASSWORD': 'nautobot'," >> nautobot_config.py
-        echo "    'HOST': 'localhost'," >> nautobot_config.py
-        echo "    'PORT': '5432'" >> nautobot_config.py
+        echo "SECRET_KEY = 'test-secret-key'" >> nautobot_config.py
+        
+        # Database settings
+        echo "DATABASES = {" >> nautobot_config.py
+        echo "    'default': {" >> nautobot_config.py
+        echo "        'NAME': 'nautobot'," >> nautobot_config.py
+        echo "        'USER': 'nautobot'," >> nautobot_config.py
+        echo "        'PASSWORD': 'nautobot'," >> nautobot_config.py
+        echo "        'HOST': 'localhost'," >> nautobot_config.py
+        echo "        'PORT': '5432'," >> nautobot_config.py
+        echo "        'ENGINE': 'django.db.backends.postgresql'" >> nautobot_config.py
+        echo "    }" >> nautobot_config.py
         echo "}" >> nautobot_config.py
+        
+        # Redis settings
         echo "REDIS = {" >> nautobot_config.py
         echo "    'tasks': {" >> nautobot_config.py
         echo "        'HOST': 'localhost'," >> nautobot_config.py
@@ -76,10 +94,29 @@ jobs:
         echo "        'PASSWORD': ''," >> nautobot_config.py
         echo "        'DATABASE': 0," >> nautobot_config.py
         echo "        'SSL': False" >> nautobot_config.py
+        echo "    }," >> nautobot_config.py
+        echo "    'caching': {" >> nautobot_config.py
+        echo "        'HOST': 'localhost'," >> nautobot_config.py
+        echo "        'PORT': 6379," >> nautobot_config.py
+        echo "        'PASSWORD': ''," >> nautobot_config.py
+        echo "        'DATABASE': 1," >> nautobot_config.py
+        echo "        'SSL': False" >> nautobot_config.py
         echo "    }" >> nautobot_config.py
         echo "}" >> nautobot_config.py
+        
+        # Plugin settings
         echo "PLUGINS = ['praksis_nhn_nautobot']" >> nautobot_config.py
-        echo "SECRET_KEY = 'test-secret-key'" >> nautobot_config.py
+        echo "PLUGINS_CONFIG = {}" >> nautobot_config.py
+        
+        # Create required directories
+        echo "os.makedirs(MEDIA_ROOT, exist_ok=True)" >> nautobot_config.py
+        echo "os.makedirs(REPORTS_ROOT, exist_ok=True)" >> nautobot_config.py
+        echo "os.makedirs(SCRIPTS_ROOT, exist_ok=True)" >> nautobot_config.py
+        echo "os.makedirs(GIT_ROOT, exist_ok=True)" >> nautobot_config.py
+    
+    - name: Create directories
+      run: |
+        mkdir -p media reports scripts git
     
     - name: Check configuration
       run: |
@@ -99,20 +136,17 @@ jobs:
         export NAUTOBOT_CONFIG=nautobot_config.py
         nautobot-server test praksis_nhn_nautobot
     
+    - name: Generate coverage report
+      run: |
+        pip install pytest-cov
+        export NAUTOBOT_ROOT=$(pwd)
+        export NAUTOBOT_CONFIG=nautobot_config.py
+        pytest --cov=praksis_nhn_nautobot praksis_nhn_nautobot/tests/
+        coverage xml
+    
     - name: Run linting
       run: |
         pip install black flake8 pylint
         black --check praksis_nhn_nautobot
         flake8 praksis_nhn_nautobot
         pylint --disable=all --enable=unused-import praksis_nhn_nautobot
-
-    - name: Generate coverage report
-      run: |
-        pip install pytest-cov
-        export NAUTOBOT_ROOT=$(pwd)
-        export NAUTOBOT_CONFIG=nautobot_config.py
-        # This will use .coveragerc automatically
-        pytest --cov=praksis_nhn_nautobot praksis_nhn_nautobot/tests/
-        
-        # Generate XML report for Codecov (if you're using it)
-        coverage xml
