@@ -18,6 +18,9 @@ env:
 jobs:
   ruff-format:
     runs-on: "ubuntu-22.04"
+    defaults:
+      run:
+        working-directory: nautobot-plugin-praksis
     env:
       INVOKE_PRAKSIS_NHN_NAUTOBOT_LOCAL: "True"
     steps:
@@ -31,6 +34,9 @@ jobs:
         run: "poetry run invoke ruff --action format"
   ruff-lint:
     runs-on: "ubuntu-22.04"
+    defaults:
+      run:
+        working-directory: nautobot-plugin-praksis
     env:
       INVOKE_PRAKSIS_NHN_NAUTOBOT_LOCAL: "True"
     steps:
@@ -44,6 +50,9 @@ jobs:
         run: "poetry run invoke ruff --action lint"
   check-docs-build:
     runs-on: "ubuntu-22.04"
+    defaults:
+      run:
+        working-directory: nautobot-plugin-praksis
     env:
       INVOKE_PRAKSIS_NHN_NAUTOBOT_LOCAL: "True"
     steps:
@@ -57,6 +66,9 @@ jobs:
         run: "poetry run invoke build-and-check-docs"
   poetry:
     runs-on: "ubuntu-22.04"
+    defaults:
+      run:
+        working-directory: nautobot-plugin-praksis
     env:
       INVOKE_PRAKSIS_NHN_NAUTOBOT_LOCAL: "True"
     steps:
@@ -70,6 +82,9 @@ jobs:
         run: "poetry run invoke lock --check"
   yamllint:
     runs-on: "ubuntu-22.04"
+    defaults:
+      run:
+        working-directory: nautobot-plugin-praksis
     env:
       INVOKE_PRAKSIS_NHN_NAUTOBOT_LOCAL: "True"
     steps:
