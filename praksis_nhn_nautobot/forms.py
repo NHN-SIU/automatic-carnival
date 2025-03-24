@@ -77,7 +77,7 @@ class SambandForm(NautobotModelForm):
 
 
 class SambandBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
-    """Bulk edit form for samband"""
+    """Bulk edit form for samband."""
 
     pk = forms.ModelMultipleChoiceField(queryset=models.Samband.objects.all(), widget=forms.MultipleHiddenInput)
 

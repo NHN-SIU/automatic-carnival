@@ -1,3 +1,19 @@
+"""
+This script imports data into an API in two phases to avoid parent relationship issues.
+
+Functions:
+    two_phase_import: Imports data in two phases, first creating records without parent relationships,
+                      then updating them with parent relationships.
+
+Configuration:
+    BASE_URL: Base API URL.
+    CREATE_API_URL: URL for creating records.
+    UPDATE_API_URL: URL for updating records.
+    API_TOKEN: API authentication token.
+    DATA_FILE: Path to the JSON file containing data to import.
+    HEADERS: HTTP headers for API requests.
+"""
+
 #!/usr/bin/env python3
 import json
 import time
@@ -9,13 +25,13 @@ BASE_URL = "http://localhost:8080/api"  # Base API URL
 CREATE_API_URL = f"{BASE_URL}/plugins/praksis-nhn-nautobot/samband/"  # For creation
 UPDATE_API_URL = f"{BASE_URL}/plugins/praksis-nhn-nautobot/samband/"  # Base for updates
 
-API_TOKEN = "0123456789abcdef0123456789abcdef01234567"
+API_TOKEN = "0123456789abcdef0123456789abcdef01234567" # noqa: S105
 DATA_FILE = "test-data.json"
 HEADERS = {"Authorization": f"Token {API_TOKEN}", "Content-Type": "application/json", "Accept": "application/json"}
 
 
 def two_phase_import():
-    """Import data in two phases to avoid parent relationship issues"""
+    """Import data in two phases to avoid parent relationship issues."""
     print("Loading data file...")
     with open(DATA_FILE, "r") as f:
         records = json.load(f)
@@ -42,7 +58,7 @@ def two_phase_import():
 
         try:
             print(f"  [{i}/{len(records)}] Creating '{record_name}' (ID: {record_id})")
-            response = requests.post(CREATE_API_URL, json=record, headers=HEADERS)
+            response = requests.post(CREATE_API_URL, json=record, headers=HEADERS, timeout=5)
 
             if response.status_code in [200, 201]:
                 print("    ✓ Success")
@@ -59,8 +75,8 @@ def two_phase_import():
                     else:
                         # If no ID in response, we'll retrieve all records later to match by name
                         created_ids[record_id] = record_id  # Temporarily use our UUID
-                except:
-                    pass  # Skip if can't parse JSON
+                except Exception as e:
+                    print(f"Failed to parse response JSON: {e}")
             else:
                 print(f"    ✗ Failed: Status {response.status_code}")
                 print(f"      Response: {response.text}")
@@ -75,7 +91,7 @@ def two_phase_import():
     # Fetch all records to get their actual IDs by name if needed
     print("\nRetrieving current records to map names to actual IDs...")
     try:
-        response = requests.get(UPDATE_API_URL, headers=HEADERS)
+        response = requests.get(UPDATE_API_URL, headers=HEADERS, timeout=5)
         if response.status_code == 200:
             api_records = response.json()
             if isinstance(api_records, dict) and "results" in api_records:
@@ -130,7 +146,7 @@ def two_phase_import():
                 # Method 1: Standard Django REST update
                 update_url = f"{UPDATE_API_URL}{api_record_id}/"
                 print(f"    Method 1: Sending PATCH to: {update_url}")
-                response = requests.patch(update_url, json=update_data, headers=HEADERS)
+                response = requests.patch(update_url, json=update_data, headers=HEADERS, timeout=5)
 
                 if response.status_code in [200, 201, 204]:
                     print("    ✓ Success with PATCH")
@@ -144,7 +160,7 @@ def two_phase_import():
                 bulk_update_url = f"{BASE_URL}/plugins/praksis-nhn-nautobot/samband/bulk_update/"
                 print(f"    Method 2: Trying bulk update to: {bulk_update_url}")
                 bulk_data = {"id": api_record_id, "parents": api_parents}
-                response = requests.post(bulk_update_url, json=bulk_data, headers=HEADERS)
+                response = requests.post(bulk_update_url, json=bulk_data, headers=HEADERS, timeout=5)
 
                 if response.status_code in [200, 201, 204]:
                     print("    ✓ Success with bulk update")

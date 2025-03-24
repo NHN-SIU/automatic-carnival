@@ -1,5 +1,6 @@
 """Data model that we assume in the plugin.
-We assume that we know all 51 fields that come from the test data (Jinja)
+
+We assume that we know all 51 fields that come from the test data (Jinja).
 """
 
 from django.core.validators import MinValueValidator
@@ -133,9 +134,6 @@ class Samband(PrimaryModel):
         verbose_name = "Samband"
         verbose_name_plural = "Samband"
 
-    def __str__(self):
-        """Stringify instance."""
-        return f"{self.name}"
 
     def __str__(self):
         """Stringify instance."""
