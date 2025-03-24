@@ -1,0 +1,767 @@
+{% extends 'base.html' %} {% load static %} {% block title %}Connection
+Hierarchy - {{ object }}{% endblock %} {% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <h3 class="panel-title">Sambandshierarki for: {{ object }}</h3>
+      </div>
+      <div class="panel-body">
+        <div class="btn-group">
+          <button class="btn btn-default" id="showHierarchy">
+            Vis komplett hierarki
+          </button>
+          <button class="btn btn-primary" id="showParents">Vis foreldre</button>
+          <button class="btn btn-default" id="showChildren">Vis barn</button>
+        </div>
+        <div class="btn-group pull-right" id="depth-controls">
+          <span class="btn btn-default disabled">Dybde:</span>
+          <button class="btn btn-default depth-btn" data-depth="1">1</button>
+          <button class="btn btn-default depth-btn active" data-depth="2">
+            2
+          </button>
+          <button class="btn btn-default depth-btn" data-depth="3">3</button>
+        </div>
+      </div>
+      <div
+        id="connection-graph"
+        style="
+          height: 600px;
+          border: 1px solid #ddd;
+          border-radius: 4px;
+          padding: 10px;
+          margin-top: 10px;
+        "
+      ></div>
+      <div class="panel-footer">
+        <div class="legend">
+          <span
+            class="badge"
+            style="background-color: #3498db; margin-right: 10px"
+            >Samband</span
+          >
+          <span
+            class="badge"
+            style="background-color: #2ecc71; margin-right: 10px"
+            >Forelder</span
+          >
+          <span
+            class="badge"
+            style="background-color: #e74c3c; margin-right: 10px"
+            >Barn</span
+          >
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://d3js.org/d3.v6.min.js"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    // Change these lines at the beginning of your script
+    let completeGraphData = null;
+    const connectionId = "{{ object.pk }}";
+    let maxDepth = 2;
+    let currentGraph = null;
+    let currentMode = "hierarchy"; // Already set to "hierarchy" correctly
+
+    // Add this function call at the beginning to update button styles
+    function updateButtonStyles() {
+      // Update button styles to match the current mode
+      document.getElementById("showParents").className =
+        currentMode === "parents" ? "btn btn-primary" : "btn btn-default";
+      document.getElementById("showChildren").className =
+        currentMode === "children" ? "btn btn-primary" : "btn btn-default";
+      document.getElementById("showHierarchy").className =
+        currentMode === "hierarchy" ? "btn btn-primary" : "btn btn-default";
+    }
+
+    // Add this at the beginning of your script, after toggleDepthControls(currentMode):
+    function updateDepthButtonStyles() {
+      document.querySelectorAll(".depth-btn").forEach((btn) => {
+        const depthValue = parseInt(btn.getAttribute("data-depth"));
+        btn.className =
+          depthValue === maxDepth
+            ? "btn btn-default depth-btn active"
+            : "btn btn-default depth-btn";
+      });
+    }
+
+    // Call this right after updateButtonStyles()
+    updateDepthButtonStyles();
+
+    // Then call this right after your variable declarations
+    updateButtonStyles();
+    toggleDepthControls(currentMode);
+
+    // Helper function to validate numbers
+    function isValidNumber(value) {
+      return typeof value === "number" && !isNaN(value) && isFinite(value);
+    }
+
+    // To show/not show dybde buttons
+    function toggleDepthControls(mode) {
+      const depthControls = document.getElementById("depth-controls");
+
+      if (mode === "hierarchy") {
+        depthControls.style.display = "inline-block"; // Show for hierarchy view
+      } else {
+        depthControls.style.display = "none"; // Hide for parents and children views
+      }
+    }
+
+    // Button handlers
+    document.getElementById("showParents").addEventListener("click", () => {
+      currentMode = "parents";
+      updateButtonStyles();
+      toggleDepthControls(currentMode);
+      renderCurrentView();
+    });
+
+    document.getElementById("showChildren").addEventListener("click", () => {
+      currentMode = "children";
+      updateButtonStyles();
+      toggleDepthControls(currentMode);
+      renderCurrentView();
+    });
+
+    document.getElementById("showHierarchy").addEventListener("click", () => {
+      currentMode = "hierarchy";
+      updateButtonStyles();
+      toggleDepthControls(currentMode);
+      renderCurrentView();
+    });
+
+    // Depth buttons
+    const depthButtons = document.querySelectorAll(".depth-btn");
+    depthButtons.forEach((button) => {
+      button.addEventListener("click", function () {
+        depthButtons.forEach(
+          (btn) => (btn.className = "btn btn-default depth-btn")
+        );
+        this.className = "btn btn-default depth-btn active";
+        maxDepth = parseInt(this.getAttribute("data-depth"));
+        fetchAndRenderGraph(true);
+      });
+    });
+
+    function fetchAndRenderGraph(forceReload = false) {
+      if (completeGraphData && !forceReload) {
+        renderCurrentView();
+        return;
+      }
+
+      let endpoint = `/api/plugins/praksis-nhn-nautobot/samband/${connectionId}/hierarchy/`;
+
+      // Loading message
+      document.getElementById("connection-graph").innerHTML =
+        '<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x"></i><p>Laster grafvisning...</p></div>';
+
+      fetch(endpoint)
+        .then((response) => response.json())
+        .then((data) => {
+          completeGraphData = data;
+          renderCurrentView();
+        })
+        .catch((error) => {
+          document.getElementById(
+            "connection-graph"
+          ).innerHTML = `<div class="alert alert-danger">Error loading graph data: ${error.message}</div>`;
+        });
+    }
+
+    // Add a function to render the current view using the stored data
+    function renderCurrentView() {
+      if (!completeGraphData) {
+        console.error("No data available to render");
+        return;
+      }
+
+      let dataToProcess;
+
+      // Use the appropriate portion of the data based on current mode
+      switch (currentMode) {
+        case "parents":
+          dataToProcess = completeGraphData.parent_tree || [];
+          renderGraph(processApiData(dataToProcess, "parents"));
+          break;
+        case "children":
+          dataToProcess = completeGraphData.child_tree || [];
+          renderGraph(processApiData(dataToProcess, "children"));
+          break;
+        case "hierarchy":
+          renderGraph(processApiData(completeGraphData, "hierarchy"));
+          break;
+      }
+    }
+
+    function processApiData(data, mode) {
+      const nodes = [];
+      const links = [];
+
+      // Add current connection as the root node
+      const rootNode = {
+        id: connectionId,
+        name: "{{ object }}",
+        sambandsnummer: "{{ object.sambandsnummer }}",
+        type: "current",
+      };
+      nodes.push(rootNode);
+
+      switch (mode) {
+        case "parents":
+          if (Array.isArray(data)) {
+            processRelationData(data, nodes, links, rootNode, true, 0, 0);
+          }
+          break;
+        case "children":
+          if (Array.isArray(data)) {
+            processRelationData(data, nodes, links, rootNode, false, 0, 0);
+          }
+          break;
+        case "hierarchy":
+          if (data.parent_tree) {
+            processRelationData(
+              data.parent_tree,
+              nodes,
+              links,
+              rootNode,
+              true,
+              0,
+              maxDepth - 1
+            );
+          }
+          if (data.child_tree) {
+            processRelationData(
+              data.child_tree,
+              nodes,
+              links,
+              rootNode,
+              false,
+              0,
+              maxDepth - 1
+            );
+          }
+          break;
+      }
+
+      return { nodes, links };
+    }
+
+    function processRelationData(
+      relationData,
+      nodes,
+      links,
+      connectedNode,
+      isParent,
+      currentDepth,
+      maxDepth
+    ) {
+      if (!relationData || !Array.isArray(relationData)) return;
+
+      relationData.forEach((relation) => {
+        // Ensure relation has an ID
+        if (!relation || !relation.id) return;
+
+        // Check if node already exists
+        const existingNode = nodes.find((n) => n.id === relation.id);
+        if (!existingNode) {
+          nodes.push({
+            id: relation.id,
+            name: relation.name || "Unknown",
+            sambandsnummer: relation.sambandsnummer || "",
+            depth: relation.depth,
+            type: isParent ? "parent" : "child",
+          });
+        }
+
+        // Make sure connectedNode is valid and has an id
+        if (!connectedNode || !connectedNode.id) return;
+
+        // Check if link already exists - handle both object and string references
+        const linkExists = links.some((l) => {
+          if (typeof l.source === "object" && typeof l.target === "object") {
+            // For parent relations: source=parent, target=child
+            // For child relations: source=parent, target=child
+            return isParent
+              ? l.source.id === relation.id && l.target.id === connectedNode.id
+              : l.source.id === connectedNode.id && l.target.id === relation.id;
+          } else {
+            return isParent
+              ? l.source === relation.id && l.target === connectedNode.id
+              : l.source === connectedNode.id && l.target === relation.id;
+          }
+        });
+
+        if (!linkExists) {
+          links.push({
+            source: isParent ? relation.id : connectedNode.id,
+            target: isParent ? connectedNode.id : relation.id,
+            type: "parent-child",
+          });
+        }
+
+        // Only recurse if we haven't reached max depth
+        if (currentDepth < maxDepth) {
+          // Recursively process relation's relations
+          const nextRelations = isParent ? relation.parents : relation.children;
+          if (nextRelations) {
+            processRelationData(
+              nextRelations,
+              nodes,
+              links,
+              {
+                id: relation.id,
+                name: relation.name || "Unknown",
+                sambandsnummer: relation.sambandsnummer || "",
+                type: isParent ? "parent" : "child",
+              },
+              isParent,
+              currentDepth + 1,
+              maxDepth
+            );
+          }
+        }
+      });
+    }
+
+    function renderGraph(graphData) {
+      // Clear previous graph
+      document.getElementById("connection-graph").innerHTML = "";
+
+      if (graphData.nodes.length <= 1) {
+        document.getElementById("connection-graph").innerHTML =
+          '<div class="alert alert-info">Ikke nok koblinger til å lage visning.</div>';
+        return;
+      }
+
+      const width = document.getElementById("connection-graph").offsetWidth;
+      const height = document.getElementById("connection-graph").offsetHeight;
+
+      // Create SVG
+      const svg = d3
+        .select("#connection-graph")
+        .append("svg")
+        .attr("width", width)
+        .attr("height", height - 20)
+        .style("overflow", "hidden") // This helps prevent clipping
+        .style("display", "block") // Ensure block display
+        .style("margin", "0 auto");
+
+      // Create group for the graph
+      const g = svg.append("g");
+
+      // Add zoom functionality
+      const zoom = d3
+        .zoom()
+        .scaleExtent([0.1, 4])
+        .on("zoom", (event) => {
+          g.attr("transform", event.transform);
+        });
+
+      svg.call(zoom);
+
+      const simulation = d3.forceSimulation(graphData.nodes).stop();
+
+      // Draw links
+      const link = g
+        .append("g")
+        .attr("class", "links")
+        .selectAll("line")
+        .data(graphData.links)
+        .enter()
+        .append("line")
+        .attr("stroke", "#999")
+        .attr("stroke-width", 1.5)
+        .attr("marker-end", "url(#arrowhead)");
+
+      // Arrow between nodes
+      svg
+        .append("defs")
+        .append("marker")
+        .attr("id", "arrowhead")
+        .attr("viewBox", "0 -5 10 10")
+        .attr("refX", 20) // Reduced from 30 to match smaller nodes
+        .attr("refY", 0)
+        .attr("orient", "auto")
+        .attr("markerWidth", 8)
+        .attr("markerHeight", 8)
+        .append("path")
+        .attr("d", "M0,-5L10,0L0,5")
+        .attr("fill", "#999");
+
+      // Create node groups
+      const node = g
+        .append("g")
+        .attr("class", "nodes")
+        .selectAll(".node")
+        .data(graphData.nodes)
+        .enter()
+        .append("g")
+        .attr("class", "node");
+
+      // Add node circles - smaller since text will be below
+      node
+        .append("circle")
+        .attr("r", (d) => (d.type === "current" ? 18 : 14)) // Smaller circles
+        .attr("fill", (d) => {
+          switch (d.type) {
+            case "current":
+              return "#3498db";
+            case "parent":
+              return "#2ecc71";
+            case "child":
+              return "#e74c3c";
+            default:
+              return "#95a5a6";
+          }
+        })
+        .attr("stroke", (d) => (d.type === "current" ? "#fff" : "#ddd"))
+        .attr("stroke-width", (d) => (d.type === "current" ? 3 : 2));
+
+      // Add node text below the circle
+      node.each(function (d) {
+        const textGroup = d3.select(this);
+        const fullName = d.name || "";
+        const fontSize = d.type === "current" ? 12 : 10;
+
+        // Function to wrap text
+        function wrapText(text, width) {
+          // Split the text into words
+          const words = text.split(/\s+/);
+          let line = [];
+          let lineNumber = 0;
+          const lineHeight = fontSize * 1.2; // Line height based on font size
+
+          let tspan = textGroup
+            .append("text")
+            .attr("text-anchor", "middle")
+            .attr("dy", 30) // Position below circle
+            .attr("fill", "#000") // Black text for better readability
+            .style("font-size", `${fontSize}px`)
+            .style("font-weight", d.type === "current" ? "bold" : "normal")
+            .append("tspan")
+            .attr("x", 0);
+
+          words.forEach((word) => {
+            line.push(word);
+            const lineText = line.join(" ");
+            tspan.text(lineText);
+
+            // Check if the line is too long (rough approximation)
+            if (lineText.length > width / (fontSize * 0.6)) {
+              line.pop(); // Remove the last word
+              tspan.text(line.join(" ")); // Set the text without the last word
+
+              line = [word]; // Start a new line with the removed word
+              lineNumber++;
+
+              // Create a new tspan for the next line
+              tspan = textGroup
+                .append("text")
+                .attr("text-anchor", "middle")
+                .attr("dy", 30 + lineNumber * lineHeight) // Position each line below the previous
+                .attr("fill", "#000")
+                .style("font-size", `${fontSize}px`)
+                .style("font-weight", d.type === "current" ? "bold" : "normal")
+                .append("tspan")
+                .attr("x", 0)
+                .text(word);
+            }
+          });
+
+          return lineNumber; // Return the number of lines created
+        }
+
+        // Wrap the text with appropriate width based on node type
+        const lineCount = wrapText(fullName, d.type === "current" ? 140 : 120);
+
+        // Store line count for sambandsnummer positioning
+        d.lineCount = lineCount;
+      });
+
+      // Add sambandsnummer below the name
+      node
+        .append("text")
+        .text((d) => d.sambandsnummer || "")
+        .attr("text-anchor", "middle")
+        .attr("dy", (d) => {
+          // Position below the name based on number of lines
+          const baseOffset = 30; // Base offset below circle
+          const lineHeight = d.type === "current" ? 14.4 : 12; // Line height (fontSize * 1.2)
+          const nameLines = d.lineCount || 0;
+
+          return baseOffset + (nameLines + 1) * lineHeight; // +1 to add space after name
+        })
+        .attr("fill", "#666") // Gray text for secondary information
+        .style("font-size", (d) => (d.type === "current" ? "10px" : "9px"))
+        .style("font-style", "italic");
+
+      // Add tooltips
+      node
+        .append("title")
+        .text((d) => `${d.name || ""}\nSB-num: ${d.sambandsnummer || "N/A"}`);
+
+      // Handle node clicking
+      node.on("click", function (event, d) {
+        if (d.id !== connectionId) {
+          window.location.href = `/plugins/praksis-nhn-nautobot/graph/${d.id}/`;
+        }
+      });
+
+      currentGraph = {
+        nodes: graphData.nodes,
+        links: graphData.links,
+        simulation: simulation,
+      };
+
+      // Apply initial positions - radial layout
+      initializeGraph(currentGraph);
+    }
+
+    function initializeGraph(graph) {
+      if (!graph || !graph.simulation) return;
+
+      const width = document.getElementById("connection-graph").offsetWidth;
+      const height = document.getElementById("connection-graph").offsetHeight;
+      const centerX = width / 2;
+      const centerY = height / 2;
+      const padding = 30;
+
+      // Adjustable spacing - increase to spread nodes out
+      const spacing = 0.25;
+
+      // Find the current node
+      const currentNode = graph.nodes.find((n) => n.id === connectionId);
+
+      // Place current node in center
+      currentNode.x = centerX;
+      currentNode.y = centerY;
+
+      // Stop it from moving
+      currentNode.fx = centerX;
+      currentNode.fy = centerY;
+
+      // Separate parents and children
+      const parents = graph.nodes.filter((n) => n.type === "parent");
+      const children = graph.nodes.filter((n) => n.type === "child");
+
+      // Simple layout based on current mode
+      if (currentMode === "hierarchy") {
+        // For hierarchy mode, use a layered layout - parents at top, children at bottom
+        const innerRadius = Math.min(width, height) * spacing;
+        const outerRadius = Math.min(width, height) * (spacing * 2);
+
+        // For a simple hierarchy, identify direct vs indirect connections
+        // This uses the link information to determine which nodes are direct connections
+        const directParentIds = new Set();
+        const directChildIds = new Set();
+
+        graph.links.forEach((link) => {
+          // Find direct connections to current node
+          if (
+            typeof link.source === "object" &&
+            link.source.id === connectionId
+          ) {
+            directChildIds.add(link.target.id);
+          } else if (
+            typeof link.source === "string" &&
+            link.source === connectionId
+          ) {
+            directChildIds.add(
+              typeof link.target === "object" ? link.target.id : link.target
+            );
+          }
+
+          if (
+            typeof link.target === "object" &&
+            link.target.id === connectionId
+          ) {
+            directParentIds.add(link.source.id);
+          } else if (
+            typeof link.target === "string" &&
+            link.target === connectionId
+          ) {
+            directParentIds.add(
+              typeof link.source === "object" ? link.source.id : link.source
+            );
+          }
+        });
+
+        // Split parents into direct and indirect
+        const directParents = parents.filter((n) => directParentIds.has(n.id));
+        const indirectParents = parents.filter(
+          (n) => !directParentIds.has(n.id)
+        );
+
+        // Split children into direct and indirect
+        const directChildren = children.filter((n) => directChildIds.has(n.id));
+        const indirectChildren = children.filter(
+          (n) => !directChildIds.has(n.id)
+        );
+
+        // Position direct parents closer to center
+        if (directParents.length > 0) {
+          positionNodesInArc(
+            directParents,
+            centerX,
+            centerY,
+            innerRadius,
+            0,
+            Math.PI
+          );
+        }
+
+        // Position indirect parents farther from center
+        if (indirectParents.length > 0) {
+          positionNodesInArc(
+            indirectParents,
+            centerX,
+            centerY,
+            outerRadius,
+            0,
+            Math.PI
+          );
+        }
+
+        // Position direct children closer to center
+        if (directChildren.length > 0) {
+          positionNodesInArc(
+            directChildren,
+            centerX,
+            centerY,
+            innerRadius,
+            Math.PI,
+            Math.PI * 2
+          );
+        }
+
+        // Position indirect children farther from center
+        if (indirectChildren.length > 0) {
+          positionNodesInArc(
+            indirectChildren,
+            centerX,
+            centerY,
+            outerRadius,
+            Math.PI,
+            Math.PI * 2
+          );
+        }
+      } else {
+        // For simple parent/child view, use the original layout
+        if (parents.length > 0) {
+          positionNodesInArc(
+            parents,
+            centerX,
+            centerY,
+            Math.min(width, height) * spacing,
+            0,
+            Math.PI
+          );
+        }
+
+        if (children.length > 0) {
+          positionNodesInArc(
+            children,
+            centerX,
+            centerY,
+            Math.min(width, height) * spacing,
+            Math.PI,
+            Math.PI * 2
+          );
+        }
+      }
+
+      // Verify no NaN positions and fix if needed
+      graph.nodes.forEach((node) => {
+        if (!isValidNumber(node.x) || !isValidNumber(node.y)) {
+          node.x = centerX + (Math.random() - 0.5) * 100;
+          node.y = centerY + (Math.random() - 0.5) * 100;
+        }
+
+        // Add padding to keep nodes visible
+        node.x = Math.max(padding, Math.min(width - padding, node.x));
+        node.y = Math.max(padding, Math.min(height - padding, node.y));
+        node.fx = node.x;
+        node.fy = node.y;
+      });
+
+      // Update link and node positions
+      updatePositions(graph, centerX, centerY);
+
+      // Stop the simulation
+      graph.simulation.stop();
+    }
+
+    // Helper function to position nodes in an arc
+    function positionNodesInArc(
+      nodes,
+      centerX,
+      centerY,
+      radius,
+      startAngle,
+      endAngle
+    ) {
+      nodes.forEach((node, i) => {
+        const angle =
+          startAngle + ((endAngle - startAngle) * (i + 1)) / (nodes.length + 1);
+        node.x = centerX + radius * Math.cos(angle);
+        node.y = centerY - radius * Math.sin(angle);
+        node.fx = node.x;
+        node.fy = node.y;
+      });
+    }
+
+    // Helper function to update positions of nodes and links
+    function updatePositions(graph, centerX, centerY) {
+      // Get references to the node and link elements
+      const nodeElements = d3.selectAll(".node");
+      const linkElements = d3.selectAll(".links line");
+
+      // Update link positions once
+      linkElements
+        .attr("x1", (d) => {
+          return (
+            d.source.x ||
+            (typeof d.source === "string"
+              ? graph.nodes.find((n) => n.id === d.source)?.x || centerX
+              : centerX)
+          );
+        })
+        .attr("y1", (d) => {
+          return (
+            d.source.y ||
+            (typeof d.source === "string"
+              ? graph.nodes.find((n) => n.id === d.source)?.y || centerY
+              : centerY)
+          );
+        })
+        .attr("x2", (d) => {
+          return (
+            d.target.x ||
+            (typeof d.target === "string"
+              ? graph.nodes.find((n) => n.id === d.target)?.x || centerX
+              : centerX)
+          );
+        })
+        .attr("y2", (d) => {
+          return (
+            d.target.y ||
+            (typeof d.target === "string"
+              ? graph.nodes.find((n) => n.id === d.target)?.y || centerY
+              : centerY)
+          );
+        });
+
+      // Update node positions once
+      nodeElements.attr("transform", (d) => {
+        return `translate(${d.x}, ${d.y})`;
+      });
+    }
+
+    // Initial load
+    fetchAndRenderGraph();
+  });
+</script>
+{% endblock %}

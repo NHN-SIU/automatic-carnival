@@ -2,6 +2,8 @@
 
 from nautobot.apps.views import NautobotUIViewSet
 
+from nautobot.core.views import generic
+
 from praksis_nhn_nautobot import filters, forms, models, tables
 from praksis_nhn_nautobot.api import serializers
 
@@ -17,3 +19,9 @@ class SambandUIViewSet(NautobotUIViewSet):
     queryset = models.Samband.objects.all()
     serializer_class = serializers.SambandSerializer
     table_class = tables.SambandTable
+
+class SambandGraphView(generic.ObjectView):
+    """Graph visualization for Samband."""
+    
+    queryset = models.Samband.objects.all()
+    template_name = "praksis_nhn_nautobot/graph_view.html"

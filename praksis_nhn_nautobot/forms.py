@@ -7,7 +7,7 @@ from praksis_nhn_nautobot import models
 
 
 class SambandForm(NautobotModelForm):
-    """NHNModel creation/edit form."""
+    """Samband creation/edit form."""
 
     class Meta:
         """Meta attributes."""
