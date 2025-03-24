@@ -5,7 +5,7 @@ from nautobot.apps.forms import NautobotBulkEditForm, NautobotFilterForm, Nautob
 
 from praksis_nhn_nautobot import models
 
-
+# pylint: disable=too-many-ancestors, nb-use-fields-all
 class SambandForm(NautobotModelForm):
     """NHNModel creation/edit form."""
 
@@ -21,31 +21,26 @@ class SambandForm(NautobotModelForm):
             "type_id",
             "status",
             "status_id",
-            
             # Location Information
             "location",
             "location_id",
             "location_type",
-            
             # Point of Presence A
             "pop_a_address_string",
             "pop_a_category",
             "pop_a_geo_string",
             "pop_a_map_url",
             "pop_a_room",
-            
             # Point of Presence B
             "pop_b_address_string",
             "pop_b_category",
             "pop_b_geo_string",
             "pop_b_map_url",
             "pop_b_room",
-            
             # Bandwidth Information
             "bandwidth_down",
             "bandwidth_up",
             "bandwidth_string",
-            
             # Cost Information
             "cost_in",
             "cost_out",
@@ -53,13 +48,11 @@ class SambandForm(NautobotModelForm):
             "express_cost",
             "dekningsbidrag",
             "dekningsgrad",
-            
             # Reference Numbers
             "sambandsnummer",
             "smbnr_nhn",
             "smbnr_orig",
             "smbnr_prefix",
-            
             # Dates
             "order_date",
             "desired_delivery_date",
@@ -70,24 +63,21 @@ class SambandForm(NautobotModelForm):
             "start_invoice_date",
             "termination_date",
             "termination_order_date",
-            
             # Vendor Information
             "vendor",
             "vendor_id",
-            
             # Additional Information
             "connection_url",
             "details_included",
             "transporttype",
             "transporttype_id",
-            
             # Relationships
             "parents",
         ]
 
 
 class SambandBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
-    """Bulk edit form for samband"""
+    """Bulk edit form for samband."""
 
     pk = forms.ModelMultipleChoiceField(queryset=models.Samband.objects.all(), widget=forms.MultipleHiddenInput)
 
