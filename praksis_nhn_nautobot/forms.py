@@ -5,7 +5,7 @@ from nautobot.apps.forms import NautobotBulkEditForm, NautobotFilterForm, Nautob
 
 from praksis_nhn_nautobot import models
 
-
+# pylint: disable=too-many-ancestors, nb-use-fields-all
 class SambandForm(NautobotModelForm):
     """NHNModel creation/edit form."""
 

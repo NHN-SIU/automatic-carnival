@@ -4,7 +4,7 @@ from nautobot.apps.filters import NameSearchFilterSet, NautobotFilterSet
 
 from praksis_nhn_nautobot import models
 
-
+# pylint: disable=nb-use-fields-all
 class SambandFilterSet(NautobotFilterSet, NameSearchFilterSet):  # pylint: disable=too-many-ancestors
     """Filter for Samband."""
 
