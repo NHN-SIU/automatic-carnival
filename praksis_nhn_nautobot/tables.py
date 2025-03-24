@@ -31,7 +31,6 @@ class SambandTable(BaseTable):
         orderable=True,
     )
 
-    
     location = tables.Column()
     type = tables.Column()
     location_type = tables.Column()
@@ -45,7 +44,7 @@ class SambandTable(BaseTable):
             {% endfor %}
         """,
         orderable=True,
-        verbose_name="Parent"
+        verbose_name="Parent",
     )
     # map = TemplateColumn(
     #     template_code="""
@@ -67,7 +66,6 @@ class SambandTable(BaseTable):
         models.Samband,
         # Option for modifying the default action buttons on each row:
         buttons=("changelog", "edit", "delete"),
-        
         # Option for modifying the pk for the action buttons:
         pk_field="pk",
     )

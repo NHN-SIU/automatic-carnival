@@ -4,23 +4,22 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('praksis_nhn_nautobot', '0002_alter_samband_options_remove_samband_description_and_more'),
+        ("praksis_nhn_nautobot", "0002_alter_samband_options_remove_samband_description_and_more"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='samband',
-            options={'ordering': ['name'], 'verbose_name': 'Samband', 'verbose_name_plural': 'Samband'},
+            name="samband",
+            options={"ordering": ["name"], "verbose_name": "Samband", "verbose_name_plural": "Samband"},
         ),
         migrations.RemoveField(
-            model_name='samband',
-            name='_url',
+            model_name="samband",
+            name="_url",
         ),
         migrations.AddField(
-            model_name='samband',
-            name='connection_url',
+            model_name="samband",
+            name="connection_url",
             field=models.URLField(blank=True, null=True),
         ),
     ]

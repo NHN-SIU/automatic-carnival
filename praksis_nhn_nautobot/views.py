@@ -16,6 +16,8 @@ for API support, and a table definition for how Samband objects are displayed in
 For more info, check out:
 https://docs.nautobot.com/projects/core/en/stable/development/apps/api/views/nautobotuiviewset/
 """
+
+
 class SambandUIViewSet(NautobotUIViewSet):
     """ViewSet for Samband views."""
 
