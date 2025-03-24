@@ -134,7 +134,6 @@ class Samband(PrimaryModel):
         verbose_name = "Samband"
         verbose_name_plural = "Samband"
 
-
     def __str__(self):
         """Stringify instance."""
         return self.name

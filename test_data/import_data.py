@@ -25,7 +25,7 @@ BASE_URL = "http://localhost:8080/api"  # Base API URL
 CREATE_API_URL = f"{BASE_URL}/plugins/praksis-nhn-nautobot/samband/"  # For creation
 UPDATE_API_URL = f"{BASE_URL}/plugins/praksis-nhn-nautobot/samband/"  # Base for updates
 
-API_TOKEN = "0123456789abcdef0123456789abcdef01234567" # noqa: S105
+API_TOKEN = "0123456789abcdef0123456789abcdef01234567"  # noqa: S105
 DATA_FILE = "test-data.json"
 HEADERS = {"Authorization": f"Token {API_TOKEN}", "Content-Type": "application/json", "Accept": "application/json"}
 
