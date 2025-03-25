@@ -1,198 +1,3 @@
-const DataService = {
-  /**
-   * Fetch hierarchy data from the API
-   * @param {string} connectionId - ID of the current connection
-   * @param {number} depth - Maximum depth to fetch
-   * @returns {Promise} - Promise that resolves to the hierarchy data
-   */
-  fetchHierarchyData: function (connectionId) {
-    const endpoint = `/api/plugins/praksis-nhn-nautobot/samband/${connectionId}/hierarchy/`;
-
-    return fetch(endpoint).then((response) => {
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
-      }
-      return response.json();
-    });
-  },
-
-  /**
-   * Extract direct (first-level) relations from relation data
-   * @param {Array} relations - Array of relation objects
-   * @returns {Array} - Array with only first-level relations
-   */
-  extractDirectRelations: function (relations) {
-    if (!Array.isArray(relations)) return [];
-
-    return relations.map((relation) => {
-      // Create a shallow copy without nested relations
-      const { parents, children, ...directRelation } = relation;
-      return directRelation;
-    });
-  },
-};
-
-const GraphProcessor = {
-  /**
-   * Process API data into graph format suitable for D3
-   * @param {Object|Array} data - API data to process
-   * @param {string} mode - View mode: 'parents', 'children', or 'hierarchy'
-   * @param {Object} config - Configuration object
-   * @returns {Object} - Object with nodes and links arrays
-   */
-  processApiData: function (data, mode, config) {
-    const { connectionId, connectionName, sambandsnummer, maxDepth } = config;
-
-    const nodes = [];
-    const links = [];
-
-    // Add current connection as the root node
-    const rootNode = {
-      id: connectionId,
-      name: connectionName,
-      sambandsnummer: sambandsnummer,
-      type: "current",
-    };
-    nodes.push(rootNode);
-
-    switch (mode) {
-      case "parents":
-        if (Array.isArray(data)) {
-          this.processRelationData(data, nodes, links, rootNode, true, 0, 0);
-        }
-        break;
-      case "children":
-        if (Array.isArray(data)) {
-          this.processRelationData(data, nodes, links, rootNode, false, 0, 0);
-        }
-        break;
-      case "hierarchy":
-        if (data.parent_tree) {
-          this.processRelationData(
-            data.parent_tree,
-            nodes,
-            links,
-            rootNode,
-            true,
-            0,
-            maxDepth - 1
-          );
-        }
-        if (data.child_tree) {
-          this.processRelationData(
-            data.child_tree,
-            nodes,
-            links,
-            rootNode,
-            false,
-            0,
-            maxDepth - 1
-          );
-        }
-        break;
-    }
-
-    return { nodes, links };
-  },
-
-  /**
-   * Process relation data recursively
-   * @param {Array} relationData - Array of relation objects
-   * @param {Array} nodes - Array to add nodes to
-   * @param {Array} links - Array to add links to
-   * @param {Object} connectedNode - The node these relations connect to
-   * @param {boolean} isParent - True if these are parent relations, false for children
-   * @param {number} currentDepth - Current recursion depth
-   * @param {number} maxDepth - Maximum recursion depth
-   */
-  processRelationData: function (
-    relationData,
-    nodes,
-    links,
-    connectedNode,
-    isParent,
-    currentDepth = 0,
-    maxDepth = Infinity
-  ) {
-    if (!relationData || !Array.isArray(relationData)) return;
-
-    relationData.forEach((relation) => {
-      // Ensure relation has an ID
-      if (!relation || !relation.id) return;
-
-      // Check if node already exists
-      const existingNode = nodes.find((n) => n.id === relation.id);
-      if (!existingNode) {
-        nodes.push({
-          id: relation.id,
-          name: relation.name || "Unknown",
-          sambandsnummer: relation.sambandsnummer || "",
-          depth: relation.depth,
-          type: isParent ? "parent" : "child",
-        });
-      }
-
-      // Make sure connectedNode is valid and has an id
-      if (!connectedNode || !connectedNode.id) return;
-
-      // Add link if it doesn't exist
-      this.addLinkIfNotExists(links, connectedNode, relation, isParent);
-
-      // Only recurse if we haven't reached max depth
-      if (currentDepth < maxDepth) {
-        // Recursively process relation's relations
-        const nextRelations = isParent ? relation.parents : relation.children;
-        if (nextRelations) {
-          this.processRelationData(
-            nextRelations,
-            nodes,
-            links,
-            {
-              id: relation.id,
-              name: relation.name || "Unknown",
-              sambandsnummer: relation.sambandsnummer || "",
-              type: isParent ? "parent" : "child",
-            },
-            isParent,
-            currentDepth + 1,
-            maxDepth
-          );
-        }
-      }
-    });
-  },
-
-  /**
-   * Add a link to the links array if it doesn't exist already
-   * @param {Array} links - Array of links
-   * @param {Object} connectedNode - Source or target node
-   * @param {Object} relation - Target or source node
-   * @param {boolean} isParent - Direction of the relationship
-   */
-  addLinkIfNotExists: function (links, connectedNode, relation, isParent) {
-    // Check if link already exists - handle both object and string references
-    const linkExists = links.some((l) => {
-      if (typeof l.source === "object" && typeof l.target === "object") {
-        return isParent
-          ? l.source.id === relation.id && l.target.id === connectedNode.id
-          : l.source.id === connectedNode.id && l.target.id === relation.id;
-      } else {
-        return isParent
-          ? l.source === relation.id && l.target === connectedNode.id
-          : l.source === connectedNode.id && l.target === relation.id;
-      }
-    });
-
-    if (!linkExists) {
-      links.push({
-        source: isParent ? relation.id : connectedNode.id,
-        target: isParent ? connectedNode.id : relation.id,
-        type: "parent-child",
-      });
-    }
-  },
-};
-
 const GraphRenderer = {
   /**
    * Initialize the D3 graph visualization
@@ -228,8 +33,8 @@ const GraphRenderer = {
 
     // Draw links and nodes
     this.createArrowMarker(svg);
-    const link = this.createLinks(g, graphData.links);
-    const node = this.createNodes(g, graphData.nodes);
+    const link = this.createLinks(g, graphData.links, connectionId);
+    const node = this.createNodes(g, graphData.nodes, connectionId);
 
     // Create graph object
     const graph = {
@@ -329,7 +134,7 @@ const GraphRenderer = {
    * @param {Array} nodes - Array of node objects
    * @returns {Selection} - D3 selection of the created nodes
    */
-  createNodes: function (g, nodes) {
+  createNodes: function (g, nodes, connectionId) {
     const node = g
       .append("g")
       .attr("class", "nodes")
@@ -352,7 +157,7 @@ const GraphRenderer = {
     this.addNodeTooltips(node);
 
     // Add click handlers
-    this.setupNodeClickHandlers(node);
+    this.setupNodeClickHandlers(node, connectionId);
 
     return node;
   },
@@ -472,9 +277,9 @@ const GraphRenderer = {
    * Set up click handlers for nodes
    * @param {Selection} node - D3 selection of nodes
    */
-  setupNodeClickHandlers: function (node) {
+  setupNodeClickHandlers: function (node, connectionId) {
     node.on("click", function (event, d) {
-      if (d.id !== GraphApplication.config.connectionId) {
+      if (d.id !== connectionId) {
         window.location.href = `/plugins/praksis-nhn-nautobot/samband/${d.id}/graph`;
       }
     });
@@ -505,6 +310,7 @@ const GraphRenderer = {
     if (currentMode === "hierarchy") {
       this.applyHierarchicalLayout(
         graph,
+        connectionId,
         centerX,
         centerY,
         width,
@@ -514,6 +320,7 @@ const GraphRenderer = {
     } else {
       this.applySimpleLayout(
         graph,
+        connectionId,
         centerX,
         centerY,
         width,
@@ -544,6 +351,7 @@ const GraphRenderer = {
    */
   applyHierarchicalLayout: function (
     graph,
+    connectionId,
     centerX,
     centerY,
     width,
@@ -553,7 +361,6 @@ const GraphRenderer = {
     if (!graph || !graph.nodes || !graph.links) return;
 
     // Find parent and child nodes
-    const connectionId = GraphApplication.config.connectionId;
     const parents = graph.nodes.filter((n) => n.type === "parent");
     const children = graph.nodes.filter((n) => n.type === "child");
 
@@ -659,6 +466,7 @@ const GraphRenderer = {
    */
   applySimpleLayout: function (
     graph,
+    connectionId,
     centerX,
     centerY,
     width,
@@ -669,7 +477,6 @@ const GraphRenderer = {
     if (!graph || !graph.nodes || !graph.links) return;
 
     // Get nodes based on current mode (excluding the current node)
-    const currentId = GraphApplication.config.connectionId;
     const relationNodes =
       mode === "parents"
         ? graph.nodes.filter((n) => n.type === "parent")
@@ -822,212 +629,22 @@ const GraphRenderer = {
   },
 };
 
-const GraphApplication = {
-  config: null,
-  state: {
-    completeGraphData: null,
-    currentGraph: null,
-    maxDepth: 2,
-    currentMode: "hierarchy",
-  },
-
-  /**
-   * Initialize the application
-   * @param {Object} config - Configuration object with initial settings
-   * @returns {Object} - The application object
-   */
-  init: function (config) {
-    this.config = {
-      containerId: config.containerId || "connection-graph",
-      connectionId: config.connectionId,
-      connectionName: config.connectionName || "Unknown Connection",
-      sambandsnummer: config.sambandsnummer || "",
-    };
-
-    // Set up UI event handlers
-    this.setupEventHandlers();
-
-    // Initial state setup
-    this.updateButtonStyles();
-    this.updateDepthButtonStyles();
-    this.toggleDepthControls(this.state.currentMode);
-
-    // Load initial data
-    this.fetchAndRenderGraph(true);
-
-    return this;
-  },
-
-  /**
-   * Set up event handlers for UI elements
-   */
-  setupEventHandlers: function () {
-    // Mode selection buttons
-    document.getElementById("showParents").addEventListener("click", () => {
-      this.state.currentMode = "parents";
-      this.updateButtonStyles();
-      this.toggleDepthControls(this.state.currentMode);
-      this.renderCurrentView();
-    });
-
-    document.getElementById("showChildren").addEventListener("click", () => {
-      this.state.currentMode = "children";
-      this.updateButtonStyles();
-      this.toggleDepthControls(this.state.currentMode);
-      this.renderCurrentView();
-    });
-
-    document.getElementById("showHierarchy").addEventListener("click", () => {
-      this.state.currentMode = "hierarchy";
-      this.updateButtonStyles();
-      this.toggleDepthControls(this.state.currentMode);
-      this.renderCurrentView();
-    });
-
-    // Depth selection buttons
-    const depthButtons = document.querySelectorAll(".depth-btn");
-    depthButtons.forEach((button) => {
-      button.addEventListener("click", () => {
-        this.state.maxDepth = parseInt(button.getAttribute("data-depth"));
-        this.updateDepthButtonStyles();
-        this.fetchAndRenderGraph(true);
-      });
-    });
-  },
-
-  /**
-   * Update button styles to match the current mode
-   */
-  updateButtonStyles: function () {
-    document.getElementById("showParents").className =
-      this.state.currentMode === "parents"
-        ? "btn btn-primary"
-        : "btn btn-default";
-
-    document.getElementById("showChildren").className =
-      this.state.currentMode === "children"
-        ? "btn btn-primary"
-        : "btn btn-default";
-
-    document.getElementById("showHierarchy").className =
-      this.state.currentMode === "hierarchy"
-        ? "btn btn-primary"
-        : "btn btn-default";
-  },
-
-  /**
-   * Update depth button styles to match the current depth
-   */
-  updateDepthButtonStyles: function () {
-    document.querySelectorAll(".depth-btn").forEach((btn) => {
-      const depthValue = parseInt(btn.getAttribute("data-depth"));
-      btn.className =
-        depthValue === this.state.maxDepth
-          ? "btn btn-primary depth-btn active"
-          : "btn btn-default depth-btn";
-    });
-  },
-
-  /**
-   * Toggle visibility of depth controls based on mode
-   * @param {string} mode - Current view mode
-   */
-  toggleDepthControls: function (mode) {
-    const depthControls = document.getElementById("depth-controls");
-    depthControls.style.display =
-      mode === "hierarchy" ? "inline-block" : "none";
-  },
-
-  /**
-   * Fetch graph data and render it
-   * @param {boolean} forceReload - Whether to force reload data from API
-   */
-  fetchAndRenderGraph: function (forceReload = false) {
-    if (this.state.completeGraphData && !forceReload) {
-      this.renderCurrentView();
-      return;
-    }
-
-    // Show loading indicator
-    document.getElementById(this.config.containerId).innerHTML =
-      '<div class="text-center"><i class="fa fa-spinner fa-spin fa-3x"></i><p>Laster grafvisning...</p></div>';
-
-    // Fetch data from API
-    DataService.fetchHierarchyData(
-      this.config.connectionId,
-      this.state.maxDepth
-    )
-      .then((data) => {
-        this.state.completeGraphData = data;
-        this.renderCurrentView();
-      })
-      .catch((error) => {
-        console.error("API Error:", error);
-        document.getElementById(
-          this.config.containerId
-        ).innerHTML = `<div class="alert alert-danger">Error loading graph data: ${error.message}</div>`;
-      });
-  },
-
-  /**
-   * Render the current view based on the current mode
-   */
-  renderCurrentView: function () {
-    if (!this.state.completeGraphData) {
-      console.error("No data available to render");
-      return;
-    }
-
-    let dataToProcess;
-
-    // Prepare data based on current mode
-    switch (this.state.currentMode) {
-      case "parents":
-        // For parents view, only show direct connections
-        dataToProcess = DataService.extractDirectRelations(
-          this.state.completeGraphData.parent_tree || []
-        );
-        break;
-
-      case "children":
-        // For children view, only show direct connections
-        dataToProcess = DataService.extractDirectRelations(
-          this.state.completeGraphData.child_tree || []
-        );
-        break;
-
-      case "hierarchy":
-        // For hierarchy view, use the complete data
-        dataToProcess = this.state.completeGraphData;
-        break;
-    }
-
-    // Process the data for visualization
-    const graphData = GraphProcessor.processApiData(
-      dataToProcess,
-      this.state.currentMode,
-      {
-        connectionId: this.config.connectionId,
-        connectionName: this.config.connectionName,
-        sambandsnummer: this.config.sambandsnummer,
-        maxDepth: this.state.maxDepth,
-      }
-    );
-
-    // Render the processed data
-    this.state.currentGraph = GraphRenderer.initializeGraph(
-      this.config.containerId,
-      graphData,
-      {
-        connectionId: this.config.connectionId,
-        currentMode: this.state.currentMode,
-      }
-    );
-  },
-};
-
-// Add this at the end of your graph_view.js file
-// Global initialization function
 function initGraphView(config) {
-  return GraphApplication.init(config);
+  const container = document.getElementById(config.containerId);
+
+  // No need to fetch data - it's provided directly
+  if (config.precomputedData) {
+    // Initialize directly with pre-computed data from backend
+    GraphRenderer.initializeGraph(config.containerId, config.precomputedData, {
+      connectionId: config.connectionId,
+      connectionName: config.connectionName,
+      currentMode: config.mode,
+    });
+  } else {
+    // Fallback to API-based loading (not needed in most cases)
+    container.innerHTML =
+      '<div class="alert alert-warning">Missing pre-computed graph data</div>';
+  }
+
+  return true;
 }
