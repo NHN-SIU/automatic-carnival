@@ -27,9 +27,11 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = ">=3.8,<3.13"
+python = ">=3.10,<3.13"
 # Used for local development
 nautobot = "^2.0.0"
+networkx = "3.4.2"
+pyvis = "0.3.2"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "*"

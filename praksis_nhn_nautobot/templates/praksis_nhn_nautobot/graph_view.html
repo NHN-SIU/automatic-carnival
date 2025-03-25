@@ -75,22 +75,38 @@
 </div>
 {% endblock %} {% block javascript %} {{ block.super }}
 <script src="https://d3js.org/d3.v6.min.js"></script>
-<script src="{% static '/js/graph_view.js' %}"></script>
-<script>
-  // Pass data directly from Django context to JavaScript
-  document.addEventListener("DOMContentLoaded", function () {
-    // Use the pre-processed graph data from backend
-    const graphData = {{ graph_data|safe }};
+<script
+  type="text/javascript"
+  src="https://cdnjs.cloudflare.com/ajax/libs/vis-network/9.1.2/dist/vis-network.min.js"
+></script>
 
-    // Initialize graph with pre-computed data
-    initGraphView({
-      containerId: "connection-graph",
-      connectionId: "{{ object.pk }}",
-      connectionName: "{{ object }}",
-      sambandsnummer: "{{ object.sambandsnummer }}",
-      precomputedData: graphData,
-      mode: "{{ current_mode }}",
-    });
-  });
+{{ nodes_json|json_script:"nodes_json" }} {{ edges_json|json_script:"edges_json"
+}} {{ options_json|json_script:"options_json" }}
+<script>
+  var container = document.getElementById("connection-graph");
+
+  const nodesData = JSON.parse(
+    document.getElementById("nodes_json").textContent
+  );
+  const edgesData = JSON.parse(
+    document.getElementById("edges_json").textContent
+  );
+  const optionsData = JSON.parse(
+    document.getElementById("options_json").textContent
+  );
+
+  // Create data object
+  var nodes = new vis.DataSet(nodesData);
+  var edges = new vis.DataSet(edgesData);
+  var data = {
+    nodes: nodes,
+    edges: edges,
+  };
+
+  // Set options
+  var options = optionsData;
+
+  // Create the network
+  var network = new vis.Network(container, data, options);
 </script>
 {% endblock %}
