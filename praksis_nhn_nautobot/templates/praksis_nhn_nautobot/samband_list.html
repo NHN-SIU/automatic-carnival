@@ -4,3 +4,10 @@
 
 {% block title %}Samband{% endblock %}
 
+
+{% block buttons %}
+    {{ block.super }}
+    <a href="{% url 'plugins:praksis_nhn_nautobot:docs' %}" class="btn btn-primary">
+        Map
+    </a>
+{% endblock buttons %}
