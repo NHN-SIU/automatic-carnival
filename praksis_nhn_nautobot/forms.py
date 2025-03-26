@@ -5,6 +5,7 @@ from nautobot.apps.forms import NautobotBulkEditForm, NautobotFilterForm, Nautob
 
 from praksis_nhn_nautobot import models
 
+
 # pylint: disable=too-many-ancestors, nb-use-fields-all
 class SambandForm(NautobotModelForm):
     """NHNModel creation/edit form."""
@@ -104,27 +105,19 @@ class SambandBulkEditForm(TagsBulkEditFormMixin, NautobotBulkEditForm):
 
 
 class SambandFilterForm(NautobotFilterForm):
-    """Filter form to filter searches."""
+    """
+    Filter form to filter searches.
+
+    Define all fields to be filtered in the "default" section (in the UI)
+    """
 
     model = models.Samband
-    field_order = [
-        "q",
-        "name",
-        "status",
-        "type",
-        "location",
-        "vendor",
-        "transporttype",
-    ]
 
-    q = forms.CharField(
-        required=False,
-        label="Search",
-        help_text="Search within Name, Status, Type, Location, or Vendor.",
-    )
     name = forms.CharField(required=False, label="Name")
-    status = forms.CharField(required=False, label="Status")
+    status = forms.ChoiceField(required=False, choices=[("", "All")] + models.Samband.STATUS_CHOICES, label="Status")
     type = forms.CharField(required=False, label="Type")
     location = forms.CharField(required=False, label="Location")
-    vendor = forms.CharField(required=False, label="Vendor")
-    transporttype = forms.CharField(required=False, label="Transport Type")
+    vendor = forms.ChoiceField(required=False, choices=[("", "All")] + models.Samband.VENDOR_CHOISES, label="Vendor")
+    transporttype = forms.ChoiceField(
+        required=False, choices=[("", "All")] + models.Samband.TRANSPORTTYPE_CHOICES, label="Transport Type"
+    )

@@ -35,6 +35,7 @@ class SambandTable(BaseTable):
     type = tables.Column()
     location_type = tables.Column()
     vendor = tables.Column()
+    transporttype = tables.Column()
     parents = TemplateColumn(
         template_code="""
             {% for parent in record.parents.all %}
@@ -75,28 +76,28 @@ class SambandTable(BaseTable):
 
         model = models.Samband
         fields = (
-            "pk",
             "name",
             "status",
             "location",
             "location_type",
             "type",
             "vendor",
+            "transporttype",
             "parents",
             # "map",
             # "graph",
         )
 
         # Option for modifying the columns that show up in the list view by default:
-        default_columns = (
-            "pk",
-            "name",
-            "status",
-            "location",
-            "location_type",
-            "type",
-            "vendor",
-            "parents",
-            # "map",
-            # "graph",
-        )
+        # default_columns = (
+        #     "pk",
+        #     "name",
+        #     "status",
+        #     "location",
+        #     "location_type",
+        #     "type",
+        #     "vendor",
+        #     "parents",
+        #     # "map",
+        #     # "graph",
+        # )
