@@ -49,7 +49,7 @@ class SambandTable(BaseTable):
     )
     # map = TemplateColumn(
     #     template_code="""
-    #         <a href="{% url 'plugins:praksis_nhn_nautobot:samband_map' record.pk %}">🗺️ Map</a>
+    #         <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' record.pk %}">🗺️ Map</a>
     #     """,
     #     orderable=False,
     #     verbose_name="Map"

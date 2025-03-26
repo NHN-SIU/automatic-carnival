@@ -10,6 +10,7 @@ from praksis_nhn_nautobot import models
 class SambandFilterSet(NautobotFilterSet):  # pylint: disable=too-many-ancestors
     """Filter for Samband."""
 
+    name = django_filters.CharFilter(lookup_expr="icontains")
     status = django_filters.CharFilter(lookup_expr="exact")
     vendor = django_filters.CharFilter(lookup_expr="exact")
 
