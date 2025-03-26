@@ -8,17 +8,29 @@ from django.db import models
 from nautobot.apps.models import PrimaryModel
 from nautobot.extras.utils import extras_features
 
+
 # pylint: disable=too-many-ancestors
 @extras_features("custom_fields", "custom_validators", "relationships", "graphql")
 class Samband(PrimaryModel):
     """Model representing a samband."""
+
+    # Dissable contact/team association and dynamic groups
+    is_contact_associable_model = False  # Opt-out of contacts/teams UI
+    is_dynamic_group_associable_model = False  # Opt-out of dynamic group filters
 
     # Basic Information
     name = models.CharField(max_length=100, unique=True)  # Keep this required
     name_prefix = models.CharField(max_length=10, blank=True, help_text="Prefix for the connection name")
     type = models.CharField(max_length=50, blank=True, help_text="Type of connection")
     type_id = models.IntegerField(null=True, blank=True, help_text="Identifier for connection type")
-    status = models.CharField(max_length=50, blank=True, help_text="Current status of connection")
+    STATUS_CHOICES = [
+        ("Active", "Active"),
+        ("Planned", "Planned"),
+        ("Decommissioned", "Decommissioned"),
+    ]
+    status = models.CharField(
+        max_length=20, choices=STATUS_CHOICES, blank=True, null=False, help_text="Status of connection"
+    )
     status_id = models.IntegerField(null=True, blank=True, help_text="Identifier for connection status")
 
     # Location Information
@@ -37,9 +49,7 @@ class Samband(PrimaryModel):
         max_length=50, blank=True, help_text="Geographic coordinates of Point of Presence A"
     )
     pop_a_map_url = models.URLField(null=True, blank=True, help_text="Map URL for Point of Presence A")
-    pop_a_room = models.CharField(
-        max_length=50, blank=True, help_text="Room identifier for Point of Presence A"
-    )
+    pop_a_room = models.CharField(max_length=50, blank=True, help_text="Room identifier for Point of Presence A")
 
     # Point of Presence B
     pop_b_address_string = models.CharField(
@@ -50,9 +60,7 @@ class Samband(PrimaryModel):
         max_length=50, blank=True, help_text="Geographic coordinates of Point of Presence B"
     )
     pop_b_map_url = models.URLField(null=True, blank=True, help_text="Map URL for Point of Presence B")
-    pop_b_room = models.CharField(
-        max_length=50, blank=True, help_text="Room identifier for Point of Presence B"
-    )
+    pop_b_room = models.CharField(max_length=50, blank=True, help_text="Room identifier for Point of Presence B")
 
     # Bandwidth Information
     bandwidth_down = models.IntegerField(
@@ -86,16 +94,10 @@ class Samband(PrimaryModel):
     )
 
     # Reference Numbers
-    sambandsnummer = models.CharField(
-        max_length=20, unique=True, blank=True, help_text="Connection reference number"
-    )
-    smbnr_nhn = models.CharField(
-        max_length=20, unique=True, blank=True, help_text="NHN connection reference number"
-    )
+    sambandsnummer = models.CharField(max_length=20, unique=True, blank=True, help_text="Connection reference number")
+    smbnr_nhn = models.CharField(max_length=20, unique=True, blank=True, help_text="NHN connection reference number")
     smbnr_orig = models.IntegerField(null=True, blank=True, help_text="Original connection reference number")
-    smbnr_prefix = models.CharField(
-        max_length=5, blank=True, help_text="Prefix for connection reference number"
-    )
+    smbnr_prefix = models.CharField(max_length=5, blank=True, help_text="Prefix for connection reference number")
 
     # Dates
     order_date = models.DateTimeField(null=True, blank=True)
@@ -109,12 +111,22 @@ class Samband(PrimaryModel):
     termination_order_date = models.DateTimeField(null=True, blank=True)
 
     # Vendor Information
+    VENDOR_CHOISES = [
+        ("Broadnet", "Broadnet"),
+        ("GlobalConnect", "GlobalCOnnect"),
+        ("Telenor", "Telenor"),
+        ("Telia", "Telia"),
+    ]
     vendor = models.CharField(max_length=100, blank=True, help_text="Vendor providing the connection")
     vendor_id = models.IntegerField(null=True, blank=True, help_text="Identifier for the vendor")
 
     # Additional Information
     connection_url = models.URLField(null=True, blank=True, help_text="URL to the connection details")
     details_included = models.BooleanField(default=False)
+    TRANSPORTTYPE_CHOICES = [
+        ("Fiber", "Fiber"),
+        ("Microwave", "Microwave"),
+    ]
     transporttype = models.CharField(max_length=50, blank=True, help_text="Type of transport connection")
     transporttype_id = models.IntegerField(null=True, blank=True, help_text="Identifier for transport type")
 
