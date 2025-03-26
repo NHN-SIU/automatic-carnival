@@ -276,7 +276,3 @@ class Samband(PrimaryModel):
     def __str__(self):
         """Stringify instance."""
         return f"{self.name}"
-
-    def __str__(self):
-        """Stringify instance."""
-        return self.name

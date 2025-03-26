@@ -76,11 +76,14 @@
 {% endblock %} {% block javascript %} {{ block.super }}
 <script src="https://d3js.org/d3.v6.min.js"></script>
 <script src="{% static '/js/graph_view.js' %}"></script>
+{{ graph_data|json_script:"graph_data" }}
 <script>
   // Pass data directly from Django context to JavaScript
   document.addEventListener("DOMContentLoaded", function () {
     // Use the pre-processed graph data from backend
-    const graphData = {{ graph_data|safe }};
+    const graphData = JSON.parse(
+      document.getElementById("graph_data").textContent
+    );
 
     // Initialize graph with pre-computed data
     initGraphView({

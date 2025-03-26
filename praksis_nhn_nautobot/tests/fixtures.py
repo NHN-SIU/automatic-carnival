@@ -8,3 +8,5 @@ def create_samband():
     Samband.objects.create(name="Test One")
     Samband.objects.create(name="Test Two")
     Samband.objects.create(name="Test Three")
+
+    
