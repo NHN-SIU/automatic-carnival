@@ -72,9 +72,10 @@ ignore = ".venv"
 no-docstring-rgx = "^(_|test_|Meta$)"
 
 [tool.pylint.messages_control]
-disable = """,
-    line-too-long
-"""
+disable = [
+    "too-many-ancestors",
+    "line-too-long",
+]
 
 [tool.pylint.miscellaneous]
 # Don't flag TODO as a failure, let us commit with things that still need to be done in the code

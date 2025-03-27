@@ -2,21 +2,44 @@
 
 from django.test import TestCase
 
-from praksis_nhn_nautobot import models
+from praksis_nhn_nautobot.models import Samband
 
 
-class TestSamband(TestCase):
-    """Test Samband."""
+class SambandModelTest(TestCase):
+    """Tests for the Samband model."""
 
-    def test_create_samband_only_required(self):
-        """Create with only required fields, and validate null description and __str__."""
-        samband = models.Samband.objects.create(name="Development")
-        self.assertEqual(samband.name, "Development")
-        self.assertEqual(samband.description, "")
-        self.assertEqual(str(samband), "Development")
+    def setUp(self):
+        """Create a basic Samband object for use in tests."""
+        self.samband = Samband.objects.create(
+            name="Test Samband",
+            sambandsnummer="SB001",
+            smbnr_nhn="NHN001",
+            status="Active",
+            vendor="Telenor",
+            transporttype="Fiber",
+        )
 
-    def test_create_samband_all_fields_success(self):
-        """Create Samband with all fields."""
-        samband = models.Samband.objects.create(name="Development", description="Development Test")
-        self.assertEqual(samband.name, "Development")
-        self.assertEqual(samband.description, "Development Test")
+    def test_object_created(self):
+        """Test that the Samband object is created properly."""
+        self.assertEqual(Samband.objects.count(), 1)
+        self.assertEqual(self.samband.name, "Test Samband")
+
+    def test_str_representation(self):
+        """Test the __str__ method."""
+        self.assertEqual(str(self.samband), "Test Samband")
+
+    def test_unique_constraints(self):
+        """Test that name and sambandsnummer must be unique."""
+        with self.assertRaises(Exception):  # IntegrityError wrapped by Django
+            Samband.objects.create(
+                name="Test Samband",  # Duplicate name
+                sambandsnummer="SB001",  # Duplicate sambandsnummer
+                smbnr_nhn="NHN001",  # Also unique
+            )
+
+    def test_optional_fields_blank(self):
+        """Test that optional fields can be left blank or null."""
+        samband = Samband.objects.create(name="Blank Test", sambandsnummer="SB002", smbnr_nhn="NHN002")
+        self.assertEqual(samband.status, "")
+        self.assertEqual(samband.vendor, "")
+        self.assertEqual(samband.transporttype, "")

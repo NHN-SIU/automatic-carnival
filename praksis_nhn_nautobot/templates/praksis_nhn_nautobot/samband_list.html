@@ -1,0 +1,13 @@
+{% extends 'generic/object_list.html' %}
+
+{% load helpers %}
+
+{% block title %}Samband{% endblock %}
+
+
+{% block buttons %}
+    {{ block.super }}
+    <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}" class="btn btn-primary">
+        Map
+    </a>
+{% endblock buttons %}

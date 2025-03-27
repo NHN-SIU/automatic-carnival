@@ -9,24 +9,22 @@ from nautobot.apps.testing import ViewTestCases
 
 from praksis_nhn_nautobot import models, views
 from praksis_nhn_nautobot.tests import fixtures
+from nautobot.core.testing import ViewTestCases
+
+from praksis_nhn_nautobot.models import Samband
 
 
-class SambandViewTest(ViewTestCases.PrimaryObjectViewTestCase):
-    # pylint: disable=too-many-ancestors
-    """Test the Samband views."""
+class SambandUIViewTest(ViewTestCases.PrimaryObjectViewTestCase):
+    """Test the Samband UI views."""
 
-    model = models.Samband
-    bulk_edit_data = {"description": "Bulk edit views"}
-    form_data = {
-        "name": "Test 1",
-        "description": "Initial model",
-    }
-    csv_data = (
-        "name",
-        "Test csv1",
-        "Test csv2",
-        "Test csv3",
-    )
+    model = Samband
+    bulk_edit_url_name = "plugins:praksis_nhn_nautobot:samband_bulk_edit"
+    bulk_delete_url_name = "plugins:praksis_nhn_nautobot:samband_bulk_delete"
+    list_url_name = "plugins:praksis_nhn_nautobot:samband_list"
+    add_url_name = "plugins:praksis_nhn_nautobot:samband_add"
+    edit_url_name = "plugins:praksis_nhn_nautobot:samband_edit"
+    detail_url_name = "plugins:praksis_nhn_nautobot:samband"
+    delete_url_name = "plugins:praksis_nhn_nautobot:samband_delete"
 
     @classmethod
     def setUpTestData(cls):

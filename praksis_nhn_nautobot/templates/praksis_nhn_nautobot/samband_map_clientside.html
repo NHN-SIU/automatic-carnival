@@ -1,0 +1,674 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Network Connections Map{% endblock %}
+
+{% block content %}
+<!-- Main container with flex layout -->
+<div style="display: flex; width: 100%; padding: 20px; gap: 20px;">
+  <!-- Left side filters -->
+  <div style="flex: 0 0 280px; background-color: #f8f9fa; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: relative; display: flex; flex-direction: column; height: 500px;">
+    <!-- Scrollable filter content -->
+    <div style="flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 70px;">
+      <h5 style="margin-top: 0; margin-bottom: 15px; font-size: 16px;">Filter Connections</h5>
+      
+      <!-- Geographic filters -->
+      <div style="margin-bottom: 15px;">
+        <strong style="font-size: 14px;">Geographic Location:</strong>
+        <div style="margin-top: 5px;">
+          <label style="font-size: 13px; display: block; margin-bottom: 3px;">Latitude:</label>
+          <input type="number" step="0.000001" id="lat" name="lat" placeholder="e.g. 59.911491" 
+                 value="{{ lat|default:'' }}" style="width: 100%; padding: 4px; font-size: 13px; margin-bottom: 5px;">
+        </div>
+        <div style="margin-top: 5px;">
+          <label style="font-size: 13px; display: block; margin-bottom: 3px;">Longitude:</label>
+          <input type="number" step="0.000001" id="lng" name="lng" placeholder="e.g. 10.757933" 
+                 value="{{ lng|default:'' }}" style="width: 100%; padding: 4px; font-size: 13px; margin-bottom: 5px;">
+        </div>
+        <div style="margin-top: 5px;">
+          <label style="font-size: 13px; display: block; margin-bottom: 3px;">Radius (km):</label>
+          <input type="number" step="1" min="0" max="1000" id="radius" name="radius" value="{{ radius|default:'50' }}" 
+                 style="width: 100%; padding: 4px; font-size: 13px; margin-bottom: 5px;">
+        </div>
+        <div style="margin-top: 8px;">
+          <input type="checkbox" id="useCurrentLocation" name="useCurrentLocation"> 
+          <label for="useCurrentLocation" style="font-size: 13px;">Use my location</label>
+          <button id="remove-pin" class="btn btn-secondary btn-sm" style="flex: 1;">Remove pin</button>
+        </div>
+      </div>
+      
+      <!-- Vendor filters -->
+      <div style="margin-bottom: 15px;">
+        <strong style="font-size: 14px;">Vendors:</strong><br>
+        <div style="max-height: 100px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; padding: 8px; margin-top: 5px;">
+          {% if vendors %}
+            {% for vendor in vendors %}
+            <div>
+              <input type="checkbox" id="vendor-{{ forloop.counter }}" name="vendors" value="{{ vendor }}" 
+                     {% if vendor in selected_vendors %}checked{% endif %}> 
+              <label for="vendor-{{ forloop.counter }}" style="font-size: 13px;">{{ vendor }}</label>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div style="font-size: 13px; color: #6c757d;">No vendors available</div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Status filters -->
+      <div style="margin-bottom: 15px;">
+        <strong style="font-size: 14px;">Status:</strong><br>
+        <div style="max-height: 100px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; padding: 8px; margin-top: 5px;">
+          {% if statuses %}
+            {% for status in statuses %}
+            <div>
+              <input type="checkbox" id="status-{{ forloop.counter }}" name="statuses" value="{{ status }}"
+                     {% if status in selected_statuses %}checked{% endif %}> 
+              <label for="status-{{ forloop.counter }}" style="font-size: 13px;">{{ status }}</label>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div style="font-size: 13px; color: #6c757d;">No statuses available</div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- City filters -->
+      <div style="margin-bottom: 15px;">
+        <strong style="font-size: 14px;">City:</strong><br>
+        <div style="max-height: 100px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; padding: 8px; margin-top: 5px;">
+          {% if citylist %}
+            {% for city in citylist %}
+            <div>
+              <input type="checkbox" id="city-{{ forloop.counter }}" name="location" value="{{ city }}"
+                     {% if city in selected_citylist %}checked{% endif %}> 
+              <label for="city-{{ forloop.counter }}" style="font-size: 13px;">{{ city }}</label>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div style="font-size: 13px; color: #6c757d;">No cities available</div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Location type filters -->
+      <div style="margin-bottom: 15px;">
+        <strong style="font-size: 14px;">Location Type:</strong><br>
+        <div style="max-height: 100px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; padding: 8px; margin-top: 5px;">
+          {% if location_types %}
+            {% for location_type in location_types %}
+            <div>
+              <input type="checkbox" id="loc-type-{{ forloop.counter }}" name="location_type" value="{{ location_type }}"
+                     {% if location_type in selected_location_types %}checked{% endif %}> 
+              <label for="loc-type-{{ forloop.counter }}" style="font-size: 13px;">{{ location_type }}</label>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div style="font-size: 13px; color: #6c757d;">No location types available</div>
+          {% endif %}
+        </div>
+      </div>
+      
+      <!-- Transport type filters -->
+      <div style="margin-bottom: 15px;">
+        <strong style="font-size: 14px;">Transport Type:</strong><br>
+        <div style="max-height: 100px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 4px; padding: 8px; margin-top: 5px;">
+          {% if transport_types %}
+            {% for transport_type in transport_types %}
+            <div>
+              <input type="checkbox" id="trans-type-{{ forloop.counter }}" name="transport_type" value="{{ transport_type }}"
+                     {% if transport_type in selected_transport_types %}checked{% endif %}> 
+              <label for="trans-type-{{ forloop.counter }}" style="font-size: 13px;">{{ transport_type }}</label>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div style="font-size: 13px; color: #6c757d;">No transport types available</div>
+          {% endif %}
+        </div>
+      </div>
+      
+    </div>
+    
+    <!-- Fixed button area at the bottom -->
+    <div style="position: absolute; bottom: 0; left: 0; right: 0; padding: 15px; background-color: #f8f9fa; border-top: 1px solid #dee2e6; border-radius: 0 0 5px 5px; display: flex; justify-content: space-between;">
+      <button id="apply-filters" class="btn btn-primary btn-sm" style="flex: 1; margin-right: 8px;">Apply Filters</button>
+      <button id="reset-filters" class="btn btn-secondary btn-sm" style="flex: 1;">Reset</button>
+    </div>
+  </div>
+  
+  <!-- Right side map -->
+  <div style="flex: 1; position: relative;">
+    <!-- Map container -->
+    <div id="leaflet" style="width: 100%; height: 500px; border: 1px solid #ccc; border-radius: 5px;"></div>
+
+    <!-- Loading indicator -->
+    <div id="loading-indicator" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.8); padding: 15px; border-radius: 5px; display: none; z-index: 1000;">
+      <div style="text-align: center;">Loading connections...</div>
+    </div>
+    
+    <!-- Connection count badge -->
+    <div style="position: absolute; bottom: 10px; left: 10px; background-color: #3186cc; color: white; padding: 5px 10px; border-radius: 20px; z-index: 400; font-size: 14px;" id="connection-count">
+      Loading...
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<!-- <link rel="stylesheet" href="https://unpkg.com/leaflet@1.0.3/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.0.3/dist/leaflet.js"></script> -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+      crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+        crossorigin=""></script>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the map
+    var map = new L.Map('leaflet', { 
+      center: [65.4, 17.0],
+      zoom: 6,
+      preferCanvas: true
+    });
+
+    // Define multiple base map tile layers
+    var osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    var osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">HOT</a>',
+      maxZoom: 19
+    });
+
+    var cartoDB_DarkMatter = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
+    });
+
+    var cartoDB_Positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
+    });
+
+    var esriWorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    });
+
+    // Group the base maps
+    var baseMaps = {
+      "OpenStreetMap": osmStandard,
+      "OpenStreetMap HOT": osmHOT,
+      "CartoDB Dark": cartoDB_DarkMatter,
+      "CartoDB Light": cartoDB_Positron,
+      "ESRI Satellite": esriWorldImagery
+    };
+
+    // Add layer groups for organization
+    var pointsLayerA = L.layerGroup().addTo(map);
+    var pointsLayerB = L.layerGroup().addTo(map);
+    var connectionsLayer = L.layerGroup().addTo(map);
+    var radiusLayer = L.layerGroup().addTo(map);
+
+    // Group the overlay layers
+    var overlayMaps = {
+      "A Points": pointsLayerA,
+      "B Points": pointsLayerB,
+      "Connections": connectionsLayer,
+      "Radius Filter": radiusLayer
+    };
+
+    // Add layer control to switch between different map styles and toggle overlays
+    L.control.layers(baseMaps, overlayMaps, {collapsed: true}).addTo(map);
+    
+    // Function to load map data with filters
+    function loadMapData(params) {
+      // Clear existing layers
+      pointsLayerA.clearLayers();
+      pointsLayerB.clearLayers();
+      connectionsLayer.clearLayers();
+      // radiusLayer.clearLayers();
+      
+      // Show loading indicator
+      document.getElementById('loading-indicator').style.display = 'block';
+      document.getElementById('connection-count').textContent = 'Loading...';
+      
+      // Build URL with parameters
+      var url = '/plugins/praksis-nhn-nautobot/samband/map-data/';
+      if (params) {
+        url += '?' + params;
+      }
+      
+      console.log('Loading data from:', url);
+      
+      // Fetch data from API
+      fetch(url)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Network response was not ok (${response.status})`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Data received:', data);
+          processMapData(data);
+        })
+        .catch(error => {
+          console.error('Error loading data:', error);
+          alert('Error loading data. Please try again later.');
+          document.getElementById('connection-count').textContent = '0 connections';
+        })
+        .finally(() => {
+          // Hide loading indicator
+          document.getElementById('loading-indicator').style.display = 'none';
+        });
+    }
+    
+    // Function to process the API data and add it to the map
+    function processMapData(data) {
+      // Update connection count
+      document.getElementById('connection-count').textContent = 
+        `${data.count || 0} connection${data.count !== 1 ? 's' : ''}`;
+      
+      // Process the data
+      if (data.features && data.features.length > 0) {
+        // Bounds to track all points for auto-centering the map
+        var bounds = [];
+        
+        // Process each feature (point or connection)
+        data.features.forEach(function(feature) {
+          if (feature.type === 'point') {
+            // Add point marker with minimal info
+            var markerColor = feature.point_type === 'A' ? '#3186cc' : '#e35f5f';
+            
+            var marker = L.marker(feature.location, {
+              icon: L.divIcon({
+                className: 'connection-point-marker',
+                html: `<div style="position: absolute; top: -6px; left: -6px; background-color: ${markerColor}; width: 12px; height: 12px; border-radius: 50%; border: 1px solid white;"></div>`,
+                iconSize: [0, 0],
+                iconAnchor: [0, 0]
+              })
+            });
+            
+            // Lazy load point details when clicked
+            marker.on('click', function() {
+              fetchConnectionDetails(feature.id, function(detailData) {
+                var popupContent = `
+                  <div style="min-width: 200px;">
+                    <strong>${feature.name} - Point ${feature.point_type}</strong><br>
+                    Location: ${detailData.location || 'N/A'}<br>
+                    Address: ${feature.point_type === 'A' ? detailData.pop_a_address : detailData.pop_b_address || 'N/A'}<br>
+                    Category: ${feature.point_type === 'A' ? detailData.pop_a_category : detailData.pop_b_category || 'N/A'}<br>
+                    Room: ${feature.point_type === 'A' ? detailData.pop_a_room : detailData.pop_b_room || 'N/A'}<br>
+                    <strong>Status:</strong> ${detailData.status || 'N/A'}<br>
+                    <strong>Bandwidth:</strong> ${detailData.bandwidth || 'N/A'}<br>
+                    <strong>Vendor:</strong> ${detailData.vendor || 'N/A'}<br>
+                    <strong>Reference:</strong> ${detailData.reference || 'N/A'}<br><br>
+                    <a href="/plugins/praksis-nhn-nautobot/samband/${feature.id}/" class="btn btn-sm btn-primary">View Details</a>
+                  </div>
+                `;
+                marker.bindPopup(popupContent).openPopup();
+              });
+            });
+            
+            marker.bindTooltip(feature.name);
+            
+            // Add to appropriate layer
+            if (feature.point_type === 'A') {
+              marker.addTo(pointsLayerA);
+            } else {
+              marker.addTo(pointsLayerB);
+            }
+            
+            // Add to bounds
+            bounds.push(feature.location);
+          } 
+          else if (feature.type === 'line') {
+            // Create line for connection with minimal info
+            var line = L.polyline(feature.points, {
+              color: 'white',
+              weight: 2,
+              opacity: 0.7,
+            });
+            
+            // Lazy load connection details when clicked
+            line.on('click', function() {
+              fetchConnectionDetails(feature.id, function(detailData) {
+                var linePopupContent = `
+                  <div style="min-width: 200px;">
+                    <strong>Connection: ${feature.name}</strong><br>
+                    <strong>Type:</strong> ${detailData.type_name || 'N/A'}<br>
+                    <strong>Status:</strong> ${detailData.status || 'N/A'}<br>
+                    <strong>Bandwidth:</strong> ${detailData.bandwidth || 'N/A'}<br>
+                    <strong>Vendor:</strong> ${detailData.vendor || 'N/A'}<br>
+                    <strong>Reference:</strong> ${detailData.reference || 'N/A'}<br><br>
+                    <a href="/plugins/praksis-nhn-nautobot/samband/${feature.id}/" class="btn btn-sm btn-primary" target="_blank">View Details</a>
+                  </div>
+                `;
+                line.bindPopup(linePopupContent).openPopup();
+              });
+            });
+            
+            line.bindTooltip(feature.name);
+            line.addTo(connectionsLayer);
+            
+            // Add connection points to bounds
+            if (feature.points && feature.points.length > 0) {
+              feature.points.forEach(function(point) {
+                bounds.push(point);
+              });
+            }
+          }
+        });
+        
+        // Fit map to bounds if we have points
+        if (bounds.length > 0) {
+          map.fitBounds(bounds);
+        }
+      } else {
+        // Show a default marker if no data
+        L.marker([65.4, 17.0]).addTo(map)
+          .bindPopup('No connection data available')
+          .openPopup();
+      }
+    }
+
+    // Add this new function to fetch connection details on demand
+    function fetchConnectionDetails(connectionId, callback) {
+      // Show loading indicator in the popup if needed
+      var loadingContent = '<div style="text-align:center;padding:10px;">Loading details...</div>';
+      
+      // Fetch detailed data for this specific connection
+      fetch(`/plugins/praksis-nhn-nautobot/samband/map-data/?connection_id=${connectionId}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Network response was not ok (${response.status})`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          // Call the callback with the detailed data
+          console.log(`Connection details for ${connectionId}:`, data);
+          callback(data);
+        })
+        .catch(error => {
+          console.error(`Error loading connection details for ${connectionId}:`, error);
+          // Show error in popup
+          callback({
+            error: 'Could not load connection details. Please try again.'
+          });
+        });
+    }
+    
+    // Handle filter apply button
+    document.getElementById('apply-filters').addEventListener('click', function() {
+      // Build query parameters
+      var params = new URLSearchParams();
+      
+      // Add lat/lng/radius if provided
+      var lat = document.getElementById('lat').value;
+      var lng = document.getElementById('lng').value;
+      var radius = document.getElementById('radius').value;
+      
+      if (lat && lng) {
+        params.append('lat', lat);
+        params.append('lng', lng);
+        params.append('radius', radius || '50');
+      }
+      
+      // Get all selected vendors
+      document.querySelectorAll('input[name="vendors"]:checked').forEach(function(checkbox) {
+        params.append('vendors', checkbox.value);
+      });
+      
+      // Get all selected statuses
+      document.querySelectorAll('input[name="statuses"]:checked').forEach(function(checkbox) {
+        params.append('statuses', checkbox.value);
+      });
+      
+      // Get all selected cities
+      document.querySelectorAll('input[name="location"]:checked').forEach(function(checkbox) {
+        params.append('location', checkbox.value);
+      });
+      
+      // Get all selected location types
+      document.querySelectorAll('input[name="location_type"]:checked').forEach(function(checkbox) {
+        params.append('location_type', checkbox.value);
+      });
+      
+      // Get all selected transport types
+      document.querySelectorAll('input[name="transport_type"]:checked').forEach(function(checkbox) {
+        params.append('transport_type', checkbox.value);
+      });
+      
+      // Load filtered data
+      loadMapData(params.toString());
+    });
+    
+    function remove_pin(){
+      if (locationMarker) {
+        map.removeLayer(locationMarker);
+        locationMarker = null;
+      }
+        
+      if (radiusMarker) {
+        radiusLayer.clearLayers();
+        radiusMarker = null;
+      }
+    }
+
+    // Handle reset button
+    document.getElementById('reset-filters').addEventListener('click', function() {
+      // Uncheck all checkboxes
+      document.querySelectorAll('input[type="checkbox"]').forEach(function(checkbox) {
+        checkbox.checked = false;
+      });
+      
+      // Clear text inputs
+      document.getElementById('lat').value = '';
+      document.getElementById('lng').value = '';
+      document.getElementById('radius').value = '50';
+
+      remove_pin();
+      
+      // Load all data
+      loadMapData();
+    });
+    
+
+    // Handle "Use my current location" checkbox
+    document.getElementById('useCurrentLocation').addEventListener('change', function() {
+      if (this.checked) {
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(function(position) {
+            document.getElementById('lat').value = position.coords.latitude.toFixed(6);
+            document.getElementById('lng').value = position.coords.longitude.toFixed(6);
+            rad = parseFloat(document.getElementById('radius').value) || 50;
+            update_pos_point_to_map(position.coords.latitude, position.coords.longitude, rad);
+          }, function(error) {
+            console.error("Error getting location: ", error);
+            alert("Could not get your location. Please enter coordinates manually.");
+            document.getElementById('useCurrentLocation').checked = false;
+          });
+        } else {
+          alert("Geolocation is not supported by this browser. Please enter coordinates manually.");
+          this.checked = false;
+        }
+      }
+    });
+    
+    // Force map to invalidate size after rendering
+    setTimeout(function() {
+      map.invalidateSize();
+    }, 100);
+    
+    // Initial load
+    loadMapData();
+
+    // Add this code after the map initialization
+    // Set up click handler to set lat/lng from map click
+    var locationMarker = null; // Store the marker for the selected location
+    var radiusMarker = null; // Store the marker for the radius circle
+    var currentRadius = 0; // Track the current radius during animation
+    var targetRadius = 0; // The target radius we want to reach
+    var animationInProgress = false; // Flag to track if animation is running
+
+    // Replace your current animateRadiusChange function with this improved version
+    function animateRadiusChange() {
+      if (!radiusMarker || currentRadius === targetRadius) {
+        animationInProgress = false;
+        return;
+      }
+      
+      animationInProgress = true;
+      
+      // Calculate the step size - faster for larger differences
+      const step = Math.max(0.5, Math.abs(targetRadius - currentRadius) * 0.1);
+      
+      if (currentRadius < targetRadius) {
+        // Growing
+        currentRadius = Math.min(targetRadius, currentRadius + step);
+      } else {
+        // Shrinking
+        currentRadius = Math.max(targetRadius, currentRadius - step);
+      }
+      
+      // Update the circle with the new radius
+      radiusMarker.setRadius(currentRadius * 1000); // Convert to meters
+      
+      // Continue animation until we reach target
+      if (Math.abs(currentRadius - targetRadius) > 0.1) {
+        requestAnimationFrame(animateRadiusChange);
+      } else {
+        // Snap to exact value when close enough
+        currentRadius = targetRadius;
+        radiusMarker.setRadius(currentRadius * 1000);
+        animationInProgress = false;
+      }
+    }
+
+    function update_radius_circle(lat, lng, radiusKm) {
+      // Convert to number to ensure proper calculation
+      radiusKm = parseFloat(radiusKm) || 50;
+      
+      // Set target radius for animation
+      targetRadius = radiusKm;
+      
+      if (!radiusMarker) {
+        // Create new circle if one doesn't exist
+        currentRadius = 0; // Start at 0 and animate to full size
+        radiusMarker = L.circle([lat, lng], {
+          radius: 0, // Start with radius 0
+          color: '#ff7800',
+          weight: 1,
+          fillColor: '#ff7800',
+          fillOpacity: 0.2,
+        }).addTo(radiusLayer);
+        
+        
+        // Start animation
+        animateRadiusChange();
+      } else {
+        // Update position immediately - the position change should be instant
+        radiusMarker.setLatLng([lat, lng]);
+        
+        // Start animation for radius if not already running
+        if (!animationInProgress) {
+          animateRadiusChange();
+        }
+      }
+    }
+
+    function update_pos_point_to_map(lat, lng, radiusKm) {
+      // if there is no location marker, create one, this also implies that there is no radius marker
+      if(!locationMarker){
+        locationMarker = L.marker([lat, lng], {
+          draggable: true,
+          icon: L.divIcon({
+              className: 'location-marker',
+              html: '<div style="position: absolute; top: -7px; left: -7px; background-color: #ff7800; width: 14px; height: 14px; border-radius: 50%; border: 2px solid white;"></div>',
+              iconSize: [0, 0],
+              iconAnchor: [0, 0]
+          })
+          }).addTo(map);
+        }
+        else{
+          locationMarker.setLatLng([lat, lng]);
+        }
+        update_radius_circle(lat, lng, radiusKm);
+        return;
+    }
+
+    map.on('click', function(e) {
+      // Get the clicked location
+      currentRadius = 0;
+      var lat = e.latlng.lat;
+      var lng = e.latlng.lng;
+      var radiusKm = parseFloat(document.getElementById('radius').value) || 50;
+      
+      // Update the form fields with the clicked location
+      document.getElementById('lat').value = lat.toFixed(6);
+      document.getElementById('lng').value = lng.toFixed(6);
+      
+      update_pos_point_to_map(lat, lng, radiusKm);
+      
+      // Remove previous drag event listener if exists to prevent multiple listeners
+      if (locationMarker._dragHandlerAdded) {
+        locationMarker.off('drag');
+      }
+      
+      // Add the drag event listener and store a flag
+      locationMarker.on('drag', function(event) {
+        var marker = event.target;
+        var position = marker.getLatLng();
+        document.getElementById('lat').value = position.lat.toFixed(6);
+        document.getElementById('lng').value = position.lng.toFixed(6);
+        
+        // Get the current radius value again to ensure it's up-to-date
+        var currentRadiusKm = parseFloat(document.getElementById('radius').value) || 50;
+        update_pos_point_to_map(position.lat, position.lng, currentRadiusKm);
+      });
+      
+      // Mark that we've added the drag handler
+      locationMarker._dragHandlerAdded = true;
+    });
+
+    // Update the radius circle when the radius input changes
+    document.getElementById('radius').addEventListener('change', function() {
+      var lat = document.getElementById('lat').value;
+      var lng = document.getElementById('lng').value;
+      var radiusKm = parseFloat(this.value) || 50;
+      if (radiusKm < 0) {
+        radiusKm = 0;
+        this.value = 0;
+      }
+      
+      if (lat && lng) {
+        update_radius_circle(lat, lng, radiusKm);
+      }
+    });
+    
+    // Update the pos-point on map when the lat/lng inputs change
+    function updateFromCoordinateInputs() {
+      var lat = parseFloat(document.getElementById('lat').value);
+      var lng = parseFloat(document.getElementById('lng').value);
+      var radiusKm = parseFloat(document.getElementById('radius').value) || 50;
+      update_pos_point_to_map(lat, lng, radiusKm);
+    }
+
+    document.getElementById('lat').addEventListener('input', updateFromCoordinateInputs);
+    document.getElementById('lng').addEventListener('input', updateFromCoordinateInputs);
+    document.getElementById('remove-pin').addEventListener('click', remove_pin);
+  });
+</script>
+{% endblock %}

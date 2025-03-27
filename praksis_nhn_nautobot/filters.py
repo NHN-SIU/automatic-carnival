@@ -1,17 +1,25 @@
 """Filtering for praksis_nhn_nautobot."""
 
-from nautobot.apps.filters import NameSearchFilterSet, NautobotFilterSet
+import django_filters
+from nautobot.apps.filters import NautobotFilterSet
 
 from praksis_nhn_nautobot import models
 
 
-class SambandFilterSet(NautobotFilterSet, NameSearchFilterSet):  # pylint: disable=too-many-ancestors
+# pylint: disable=nb-use-fields-all
+class SambandFilterSet(NautobotFilterSet):  # pylint: disable=too-many-ancestors
     """Filter for Samband."""
+
+    name = django_filters.CharFilter(lookup_expr="icontains")
+    status = django_filters.CharFilter(lookup_expr="exact")
+    vendor = django_filters.CharFilter(lookup_expr="exact")
 
     class Meta:
         """Meta attributes for filter."""
 
         model = models.Samband
 
-        # add any fields from the model that you would like to filter your searches by using those
-        fields = ["id", "name"]
+        # add any fields from the model that you would like to filter in the "advanced"  filter
+        fields = "__all__"
+
+        # Can also use fields = "__all___" in combination with exclude = [] to exclude specific fields
