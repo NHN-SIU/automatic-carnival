@@ -1,0 +1,286 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ samband.name }} - Connection Map{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <!-- Page header with connection name -->
+  <h2 class="my-3">Connection: {{ samband.name }}</h2>
+
+  <!-- Connection map and details layout -->
+  <div class="row">
+    <!-- Map section -->
+    <div class="col-md-8">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Connection Map</h5>
+        </div>
+        <div class="card-body p-0">
+          <!-- Map container -->
+          <div id="connection-map" style="width: 100%; height: 500px;"></div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Connection details section -->
+    <div class="col-md-4">
+      <div class="card">
+        <div class="card-header">
+          <h5 class="card-title mb-0">Connection Details</h5>
+        </div>
+        <div class="card-body">
+          <!-- Basic connection info -->
+          <div class="mb-4">
+            <h6 class="border-bottom pb-2">General Information</h6>
+            <table class="table table-sm">
+              <tbody>
+                <tr>
+                  <th scope="row">Name</th>
+                  <td>{{ samband.name }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Reference</th>
+                  <td>{{ samband.sambandsnummer }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Type</th>
+                  <td>{{ samband.type }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Status</th>
+                  <td>{{ samband.status }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Vendor</th>
+                  <td>{{ samband.vendor }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Bandwidth</th>
+                  <td>{{ samband.bandwidth_string }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Location</th>
+                  <td>{{ samband.location }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Location Type</th>
+                  <td>{{ samband.location_type }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Transport Type</th>
+                  <td>{{ samband.transporttype }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Point A details -->
+          <div class="mb-4">
+            <h6 class="border-bottom pb-2">Point A</h6>
+            <table class="table table-sm">
+              <tbody>
+                <tr>
+                  <th scope="row">Address</th>
+                  <td>{{ samband.pop_a_address_string }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Category</th>
+                  <td>{{ samband.pop_a_category }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Room</th>
+                  <td>{{ samband.pop_a_room }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Coordinates</th>
+                  <td>{{ samband.pop_a_geo_string }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Point B details -->
+          <div>
+            <h6 class="border-bottom pb-2">Point B</h6>
+            <table class="table table-sm">
+              <tbody>
+                <tr>
+                  <th scope="row">Address</th>
+                  <td>{{ samband.pop_b_address_string }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Category</th>
+                  <td>{{ samband.pop_b_category }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Room</th>
+                  <td>{{ samband.pop_b_room }}</td>
+                </tr>
+                <tr>
+                  <th scope="row">Coordinates</th>
+                  <td>{{ samband.pop_b_geo_string }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="card-footer">
+          <a href="{% url 'plugins:praksis_nhn_nautobot:samband' pk=samband.pk %}" class="btn btn-primary">View Full Details</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<!-- Leaflet CSS and JS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" 
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" 
+      crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" 
+        crossorigin=""></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // Initialize the map
+    var map = L.map('connection-map', { 
+      preferCanvas: true
+    });
+
+    // Add base layer
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    // Define multiple base map tile layers
+    var osmStandard = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { 
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      maxZoom: 19
+    }).addTo(map);
+
+    var osmHOT = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, Tiles style by <a href="https://www.hotosm.org/" target="_blank">HOT</a>',
+      maxZoom: 19
+    });
+
+    var cartoDB_DarkMatter = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
+    });
+
+    var cartoDB_Positron = L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      subdomains: 'abcd',
+      maxZoom: 19
+    });
+
+    var esriWorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+      attribution: 'Tiles &copy; Esri &mdash; Source: Esri, i-cubed, USDA, USGS, AEX, GeoEye, Getmapping, Aerogrid, IGN, IGP, UPR-EGP, and the GIS User Community'
+    });
+
+    // Group the base maps
+    var baseMaps = {
+      "OpenStreetMap": osmStandard,
+      "OpenStreetMap HOT": osmHOT,
+      "CartoDB Dark": cartoDB_DarkMatter,
+      "CartoDB Light": cartoDB_Positron,
+      "ESRI Satellite": esriWorldImagery
+    };
+
+    // Add layer control to switch between different map styles
+    L.control.layers(baseMaps).addTo(map);
+
+    // Get map data from template context
+    var mapData = {{ map_data|safe }};
+    
+    // Process the map features
+    var bounds = [];
+    
+    if (mapData && mapData.features && mapData.features.length > 0) {
+      mapData.features.forEach(function(feature) {
+        // Add points
+        if (feature.type === 'point') {
+          var markerColor = feature.point_type === 'A' ? '#3186cc' : '#e35f5f';
+          
+          var marker = L.marker(feature.location, {
+            icon: L.divIcon({
+              className: 'connection-point-marker',
+              html: `<div style="position: absolute; top: -8px; left: -8px; background-color: ${markerColor}; width: 16px; height: 16px; border-radius: 50%; border: 2px solid white;"></div>`,
+              iconSize: [0, 0],
+              iconAnchor: [0, 0]
+            })
+          }).addTo(map);
+          
+          // Create popup content
+          var popupContent = `
+            <div style="min-width: 200px;">
+              <strong>${feature.name} - Point ${feature.point_type}</strong><br>
+              Address: ${feature.address || 'N/A'}<br>
+              Category: ${feature.category || 'N/A'}<br>
+              Room: ${feature.room || 'N/A'}
+            </div>
+          `;
+          
+          marker.bindPopup(popupContent);
+          marker.bindTooltip(`Point ${feature.point_type}: ${feature.address || 'N/A'}`);
+          bounds.push(feature.location);
+        }
+        
+        // Add connection line
+        else if (feature.type === 'line') {
+          var line = L.polyline(feature.points, {
+            color: 'white',
+            weight: 4,
+            opacity: 0.8
+          }).addTo(map);
+          
+          // Add the samband details to the line popup
+          var details = mapData.samband_details;
+          var linePopupContent = `
+            <div style="min-width: 200px;">
+              <strong>${details.name}</strong><br>
+              <strong>Type:</strong> ${details.type_name || 'N/A'}<br>
+              <strong>Status:</strong> ${details.status || 'N/A'}<br>
+              <strong>Bandwidth:</strong> ${details.bandwidth || 'N/A'}<br>
+              <strong>Vendor:</strong> ${details.vendor || 'N/A'}<br>
+              <strong>Reference:</strong> ${details.reference || 'N/A'}
+            </div>
+          `;
+          
+          line.bindPopup(linePopupContent);
+          line.bindTooltip(details.name);
+          
+          // Add line points to bounds
+          if (feature.points && feature.points.length > 0) {
+            feature.points.forEach(function(point) {
+              bounds.push(point);
+            });
+          }
+        }
+      });
+      
+      // Fit map to bounds if we have points
+      if (bounds.length > 0) {
+        map.fitBounds(bounds, { padding: [30, 30] });
+      }
+    } else {
+      // Show default view if no connection data
+      map.setView([65.4, 17.0], 5);
+      L.marker([65.4, 17.0]).addTo(map)
+        .bindPopup('No connection data available')
+        .openPopup();
+    }
+    
+    // Force map to invalidate size after rendering
+    setTimeout(function() {
+      map.invalidateSize();
+    }, 100);
+  });
+</script>
+{% endblock %}

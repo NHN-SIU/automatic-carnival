@@ -15,6 +15,10 @@ router.register("samband", views.SambandUIViewSet)
 
 urlpatterns = [
     path("docs/", RedirectView.as_view(url=static("praksis_nhn_nautobot/docs/index.html")), name="docs"),
+    # Change int:pk to uuid:pk or str:pk to accept UUID values
+    path("samband/map/<uuid:pk>/", views.SambandMapView.as_view(), name="samband_map"),
+    path('samband/map/', views.SambandClientMapView.as_view(), name='samband_client_map'),
+    path('samband/map-data/', views.SambandMapDataAPIView.as_view(), name='samband_map_data'),
 ]
 
 urlpatterns += router.urls
