@@ -1,6 +1,7 @@
 """Views for praksis_nhn_nautobot."""
 
 from nautobot.apps.views import NautobotUIViewSet
+from nautobot.apps.ui import SectionChoices, ObjectFieldsPanel, ObjectDetailContent
 
 from praksis_nhn_nautobot import filters, forms, models, tables
 from praksis_nhn_nautobot.api import serializers
@@ -26,3 +27,14 @@ class SambandUIViewSet(NautobotUIViewSet):
     queryset = models.Samband.objects.all()
     serializer_class = serializers.SambandSerializer
     table_class = tables.SambandTable
+
+    object_detail_content = ObjectDetailContent(
+        panels=[
+            ObjectFieldsPanel(
+               weight=100,
+               label="All information",
+               section=SectionChoices.RIGHT_HALF,
+                fields="__all__"
+            )
+        ]
+    )
