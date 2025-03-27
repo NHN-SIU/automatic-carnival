@@ -1,7 +1,47 @@
+# """Tables for praksis_nhn_nautobot."""
+
+# import django_tables2 as tables
+# from nautobot.apps.tables import BaseTable, ButtonsColumn, ToggleColumn
+
+# from praksis_nhn_nautobot import models
+
+
+# class SambandTable(BaseTable):
+#     # pylint: disable=R0903
+#     """Table for list view."""
+
+#     pk = ToggleColumn()
+#     name = tables.Column(linkify=True)
+#     actions = ButtonsColumn(
+#         models.Samband,
+#         # Option for modifying the default action buttons on each row:
+#         buttons=("changelog", "edit", "delete"),
+        
+#         # Option for modifying the pk for the action buttons:
+#         pk_field="pk",
+#     )
+
+#     class Meta(BaseTable.Meta):
+#         """Meta attributes."""
+
+#         model = models.Samband
+#         fields = (
+#             "pk",
+#             "name",
+#         )
+
+#         # Option for modifying the columns that show up in the list view by default:
+#         default_columns = (
+#             "pk",
+#             "name",
+#         )
+
+
 """Tables for praksis_nhn_nautobot."""
 
 import django_tables2 as tables
 from django_tables2.columns import TemplateColumn
+from django.urls import reverse
 from nautobot.apps.tables import BaseTable, ButtonsColumn, ToggleColumn
 
 from praksis_nhn_nautobot import models
@@ -63,6 +103,17 @@ class SambandTable(BaseTable):
     #     verbose_name="Graph"
     # )
 
+    
+    # Add a custom map button column
+    map = tables.TemplateColumn(
+        template_code="""
+        <a href="{% url 'plugins:praksis_nhn_nautobot:samband_map' record.pk %}" class="btn btn-sm btn-primary" title="View Map">
+            <i class="mdi mdi-map-marker"></i>
+        </a>
+        """,
+        verbose_name="Map"
+    )
+    
     actions = ButtonsColumn(
         models.Samband,
         # Option for modifying the default action buttons on each row:
@@ -70,6 +121,7 @@ class SambandTable(BaseTable):
         # Option for modifying the pk for the action buttons:
         pk_field="pk",
     )
+
 
     class Meta(BaseTable.Meta):
         """Meta attributes."""
@@ -86,18 +138,6 @@ class SambandTable(BaseTable):
             "parents",
             # "map",
             # "graph",
+            "map",
+            "actions",
         )
-
-        # Option for modifying the columns that show up in the list view by default:
-        # default_columns = (
-        #     "pk",
-        #     "name",
-        #     "status",
-        #     "location",
-        #     "location_type",
-        #     "type",
-        #     "vendor",
-        #     "parents",
-        #     # "map",
-        #     # "graph",
-        # )
