@@ -51,7 +51,7 @@ namespace = Collection("praksis_nhn_nautobot")
 namespace.configure(
     {
         "praksis_nhn_nautobot": {
-            "nautobot_ver": "2.3.1",
+            "nautobot_ver": "2.4.5",
             "project_name": "praksis-nhn-nautobot",
             "python_ver": "3.11",
             "local": False,
