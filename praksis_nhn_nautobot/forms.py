@@ -114,10 +114,61 @@ class SambandFilterForm(NautobotFilterForm):
     model = models.Samband
 
     name = forms.CharField(required=False, label="Name")
-    status = forms.ChoiceField(required=False, choices=[("", "All")] + models.Samband.STATUS_CHOICES, label="Status")
-    type = forms.CharField(required=False, label="Type")
-    location = forms.CharField(required=False, label="Location")
-    vendor = forms.ChoiceField(required=False, choices=[("", "All")] + models.Samband.VENDOR_CHOISES, label="Vendor")
-    transporttype = forms.ChoiceField(
-        required=False, choices=[("", "All")] + models.Samband.TRANSPORTTYPE_CHOICES, label="Transport Type"
+
+    type = forms.ChoiceField(required=False, label="Type")
+
+    status = forms.ChoiceField(
+        required=False,
+        choices=[('', 'Any')]+models.Samband.STATUS_CHOICES,
+        label="Status"
     )
+    location = forms.ChoiceField(
+        required=False,
+        label="Location",
+    )
+    vendor = forms.ChoiceField(
+        required=False,
+        label="Vendor"
+    )
+    transporttype = forms.ChoiceField(
+        required=False,
+        label="Transport Type",
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+    live_date__gte = forms.DateField(
+        required=False,
+        label="Live Date (after or on)",
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+    live_date__lte = forms.DateField(
+        required=False,
+        label="Live Date (before or on)",
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+    termination_date__gte = forms.DateField(
+        required=False,
+        label="Termination Date (after or on)",
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+    termination_date__lte = forms.DateField(
+        required=False,
+        label="Termination Date (before or on)",
+        widget=forms.DateInput(attrs={"type": "date"}),
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Fetch distinct location values from the Samband model
+        locations = models.Samband.objects.values_list('location', flat=True)
+        vendors = models.Samband.objects.values_list('vendor', flat=True).distinct()
+        transporttypes = models.Samband.objects.values_list('transporttype', flat=True).distinct()
+        types = models.Samband.objects.values_list('type', flat=True).distinct()
+        location_choices =          sorted([('', 'Any')] + [(loc, loc) for loc in set(locations) if loc])
+        vendor_choices =            sorted([('', 'Any')] + [(ven, ven) for ven in set(vendors) if ven])
+        transporttype_choices =     sorted([('', 'Any')] + [(tpt, tpt) for tpt in set(transporttypes) if tpt])
+        type_choices =              sorted([('', 'Any')] + [(tpt, tpt) for tpt in set(types) if tpt])
+        self.fields['location'].choices = location_choices
+        self.fields['vendor'].choices = vendor_choices
+        self.fields['transporttype'].choices = transporttype_choices
+        self.fields['type'].choices = type_choices
+        
