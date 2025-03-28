@@ -1,11 +1,9 @@
 """Views for praksis_nhn_nautobot."""
 
-from nautobot.apps.views import NautobotUIViewSet
-<<<<<<< HEAD
-from nautobot.apps.ui import SectionChoices, ObjectFieldsPanel, ObjectDetailContent
-=======
+from nautobot.apps.views import NautobotUIViewSet, ObjectView
+from nautobot.apps.ui import SectionChoices, ObjectFieldsPanel, ObjectDetailContent, DistinctViewTab, Button, DropdownButton
 from nautobot.core.views import generic
->>>>>>> main
+from nautobot.core.choices import ButtonColorChoices
 from django.views.generic import DetailView, View, TemplateView
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -16,6 +14,92 @@ from math import radians, cos, sin, asin, sqrt
 
 from .models import Samband
 
+class SambandDetailMapTabView(ObjectView):
+    queryset = Samband.objects.all()
+    template_name = "praksis_nhn_nautobot/samband_detail_tab_map.html"
+
+class SambandDetailGraphTabView(ObjectView):
+    queryset = Samband.objects.all()
+    template_name = "praksis_nhn_nautobot/samband_detail_tab_graph.html"
+
+
+
+
+class SambandMapTabView(DetailView):
+    model = Samband
+    template_name = "praksis_nhn_nautobot/samband_map_tab.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        samband = self.get_object()
+        
+        # Prepare map data for rendering
+        features = []
+        connection_points = []
+        
+        # Process Point A
+        if samband.pop_a_geo_string:
+            a_lat, a_lng = parse_geo_coordinates(samband.pop_a_geo_string)
+            if a_lat is not None and a_lng is not None:
+                point_data = {
+                    'type': 'point',
+                    'point_type': 'A',
+                    'location': [a_lat, a_lng],
+                    'name': samband.name,
+                    'address': samband.pop_a_address_string,
+                    'category': samband.pop_a_category,
+                    'room': samband.pop_a_room,
+                    'id': str(samband.pk)
+                }
+                features.append(point_data)
+                connection_points.append([a_lat, a_lng])
+        
+        # Process Point B
+        if samband.pop_b_geo_string:
+            b_lat, b_lng = parse_geo_coordinates(samband.pop_b_geo_string)
+            if b_lat is not None and b_lng is not None:
+                point_data = {
+                    'type': 'point',
+                    'point_type': 'B',
+                    'location': [b_lat, b_lng],
+                    'name': samband.name,
+                    'address': samband.pop_b_address_string,
+                    'category': samband.pop_b_category,
+                    'room': samband.pop_b_room,
+                    'id': str(samband.pk)
+                }
+                features.append(point_data)
+                connection_points.append([b_lat, b_lng])
+        
+        # Add connection line if both points exist
+        if len(connection_points) == 2:
+            line_data = {
+                'type': 'line',
+                'points': connection_points,
+                'name': samband.name,
+                'id': str(samband.pk)
+            }
+            features.append(line_data)
+        
+        # Add samband details and map features to context
+        context['samband'] = samband
+        context['map_data'] = {
+            'features': features,
+            'count': 1,
+            'samband_details': {
+                'name': samband.name,
+                'vendor': samband.vendor,
+                'status': samband.status,
+                'bandwidth': samband.bandwidth_string,
+                'reference': samband.sambandsnummer,
+                'type_name': samband.type,
+                'location': samband.location,
+                'location_type': samband.location_type,
+                'transport_type': samband.transporttype
+            }
+        }
+        
+        return context
 
 class SambandUIViewSet(NautobotUIViewSet):
     """
@@ -48,8 +132,36 @@ class SambandUIViewSet(NautobotUIViewSet):
                section=SectionChoices.RIGHT_HALF,
                fields="__all__",
             )
-        ]
+        ],
+        extra_tabs=[
+            DistinctViewTab(
+                tab_id="tab-map",
+                label="Map",
+                weight=800,
+                url_name="plugins:praksis_nhn_nautobot:samband_map_tab",
+            ),
+        ],
+        extra_buttons=[
+            Button(
+                weight=100,
+                label="Map",
+                icon="mdi-map-marker",
+                link_name="plugins:praksis_nhn_nautobot:samband_map",
+                color=ButtonColorChoices.BLUE
+            ),
+            Button(
+                weight=125,
+                label="Graph",
+                icon="mdi-chart-histogram",
+                link_name="plugins:praksis_nhn_nautobot:Samband_graph",
+                color=ButtonColorChoices.BLUE
+            )
+        ],
+        # TODO implement drop-down button
     )
+
+
+
 class SambandGraphView(generic.ObjectView):
     """Graph visualization for Samband."""
     

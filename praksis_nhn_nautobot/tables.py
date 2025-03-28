@@ -71,11 +71,11 @@ class SambandTable(BaseTable):
         orderable=True,
     )
 
-    location = tables.Column()
+    location = tables.Column(verbose_name="Lokasjon")
     type = tables.Column()
-    location_type = tables.Column()
+    location_type = tables.Column(verbose_name="Lokasjon type")
     vendor = tables.Column()
-    transporttype = tables.Column()
+    transporttype = tables.Column(verbose_name="Transport type")
     parents = TemplateColumn(
         template_code="""
             {% for parent in record.parents.all %}
@@ -85,23 +85,18 @@ class SambandTable(BaseTable):
             {% endfor %}
         """,
         orderable=True,
-        verbose_name="Parent",
+        verbose_name="Parent Circuit",
     )
-    # map = TemplateColumn(
-    #     template_code="""
-    #         <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' record.pk %}">🗺️ Map</a>
-    #     """,
-    #     orderable=False,
-    #     verbose_name="Map"
-    # )
 
-    # graph = TemplateColumn(
-    #     template_code="""
-    #         <a href="{% url 'plugins:praksis_nhn_nautobot:samband_graph' record.pk %}">📊 Graph</a>
-    #     """,
-    #     orderable=False,
-    #     verbose_name="Graph"
-    # )
+    graph = TemplateColumn(
+        template_code="""
+            <a href="{% url 'plugins:praksis_nhn_nautobot:Samband_graph' record.pk %}" class="btn btn-sm btn-primary" title="View Graph">
+                <i class="mdi mdi-chart-histogram"></i>
+            </a>
+        """,
+        orderable=False,
+        verbose_name="Graph"
+    )
 
     
     # Add a custom map button column
@@ -111,6 +106,7 @@ class SambandTable(BaseTable):
             <i class="mdi mdi-map-marker"></i>
         </a>
         """,
+        orderable=False,
         verbose_name="Map"
     )
     
@@ -136,8 +132,7 @@ class SambandTable(BaseTable):
             "vendor",
             "transporttype",
             "parents",
-            # "map",
-            # "graph",
             "map",
+            "graph",
             "actions",
         )
