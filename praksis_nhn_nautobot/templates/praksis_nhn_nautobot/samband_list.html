@@ -7,7 +7,14 @@
 
 {% block buttons %}
     {{ block.super }}
-    <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}" class="btn btn-primary">
-        Map
-    </a>
+    {% if request.GET %}
+        <!-- Only show when filters are applied -->
+        <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?{{ request.GET.urlencode }}" class="btn btn-primary">
+            <i class="mdi mdi-map-marker" aria-hidden="true"></i> View in Map
+        </a>
+        
+        <a href="{% url 'plugins:praksis_nhn_nautobot:filtered_graph' %}?{{ request.GET.urlencode }}" class="btn btn-primary">
+            <i class="mdi mdi-graph" aria-hidden="true"></i> View in Graph
+        </a>
+    {% endif %}
 {% endblock buttons %}

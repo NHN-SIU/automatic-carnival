@@ -630,20 +630,42 @@ const GraphRenderer = {
 };
 
 function initGraphView(config) {
-  const container = document.getElementById(config.containerId);
+  console.log;
+  console.log(config);
 
-  // No need to fetch data - it's provided directly
-  if (config.precomputedData) {
-    // Initialize directly with pre-computed data from backend
-    GraphRenderer.initializeGraph(config.containerId, config.precomputedData, {
-      connectionId: config.connectionId,
-      connectionName: config.connectionName,
-      currentMode: config.mode,
-    });
+  const container = document.getElementById(config.containerId);
+  container.innerHTML = "";
+
+  if (config.connectionId) {
+    // Fetch data from API if only connectionId is provided
+    container.innerHTML = '<div class="loading">Loading graph data...</div>';
+
+    const url = `/api/plugins/praksis-nhn-nautobot/samband/${
+      config.connectionId
+    }/hierarchy/?depth=${config.depth || 2}`;
+
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) {
+          throw new Error(`Network response was not ok (${response.status})`);
+        }
+        return response.json();
+      })
+      .then((data) => {
+        container.innerHTML = "";
+        GraphRenderer.initializeGraph(config.containerId, data.graph_data, {
+          connectionId: config.connectionId,
+          connectionName: data.samband.name,
+          currentMode: config.mode || "hierarchy",
+        });
+      })
+      .catch((error) => {
+        container.innerHTML = `<div class="alert alert-danger">Error loading graph data: ${error.message}</div>`;
+        console.error("Error loading graph data:", error);
+      });
   } else {
-    // Fallback to API-based loading (not needed in most cases)
     container.innerHTML =
-      '<div class="alert alert-warning">Missing pre-computed graph data</div>';
+      '<div class="alert alert-warning">Missing connection data</div>';
   }
 
   return true;
