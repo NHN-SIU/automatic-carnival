@@ -95,22 +95,16 @@ class SambandTable(BaseTable):
         orderable=True,
         verbose_name="Parent",
     )
-    # map = TemplateColumn(
-    #     template_code="""
-    #         <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' record.pk %}">🗺️ Map</a>
-    #     """,
-    #     orderable=False,
-    #     verbose_name="Map"
-    # )
 
-    # graph = TemplateColumn(
-    #     template_code="""
-    #         <a href="{% url 'plugins:praksis_nhn_nautobot:samband_graph' record.pk %}">📊 Graph</a>
-    #     """,
-    #     orderable=False,
-    #     verbose_name="Graph"
-    # )
-
+    graph = tables.TemplateColumn(
+        template_code="""
+        <a href="{% url 'plugins:praksis_nhn_nautobot:samband_graph' record.pk %}" class="btn btn-sm btn-primary" title="View Graph">
+            <i class="mdi mdi-graph"></i>
+        </a>
+        """,
+        orderable=False,
+        verbose_name="Graph"
+    )
     
     # Add a custom map button column
     map = tables.TemplateColumn(
@@ -119,6 +113,7 @@ class SambandTable(BaseTable):
             <i class="mdi mdi-map-marker"></i>
         </a>
         """,
+        orderable=False,
         verbose_name="Map"
     )
     
