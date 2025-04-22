@@ -19,7 +19,6 @@ urlpatterns = [
     path("samband/map/<uuid:pk>/", views.SambandMapView.as_view(), name="samband_map"),
     path('samband/map/', views.SambandClientMapView.as_view(), name='samband_client_map'),
     path('samband/map-data/', views.SambandMapDataAPIView.as_view(), name='samband_map_data'),
-    path("samband/<uuid:pk>/tab_map/", views.SambandDetailMapTabView.as_view(), name='samband_map_tab'),
 ]
 
 urlpatterns += router.urls
