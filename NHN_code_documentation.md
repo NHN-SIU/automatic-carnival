@@ -16,7 +16,7 @@ It is recommended installing poetry by following [one of the installation method
 
 ### 2.1 Clone repository
 Navigate to a repository and clone this project:
-'git clone https://github.com/NHN-SIU/automatic-carnival.git'
+`git clone https://github.com/NHN-SIU/automatic-carnival.git`
 
 ### 2.2 Change creds.env, development.env 
 The app reades cread.env and development.env. development.env already exists. Copy the example creds file and modify it if you want:
