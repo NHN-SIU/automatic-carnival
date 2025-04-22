@@ -529,11 +529,11 @@ class SambandClientMapView(TemplateView):
         radius = self.request.GET.get('radius')
         
         # Handle multiple selections
-        vendors = self.request.GET.getlist('vendors')
-        statuses = self.request.GET.getlist('statuses')
+        vendors = self.request.GET.getlist('vendor')
+        statuses = self.request.GET.getlist('status')
         citylist = self.request.GET.getlist('location')
         location_types = self.request.GET.getlist('location_type')
-        transport_types = self.request.GET.getlist('transport_type')
+        transport_types = self.request.GET.getlist('transporttype')
         
         # Get filter options
         filter_options = self.get_filter_options()

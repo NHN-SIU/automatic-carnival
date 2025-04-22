@@ -761,11 +761,11 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     document.querySelectorAll('input[name="vendors"]:checked').forEach(function(checkbox) {
-      params.append('vendors', checkbox.value);
+      params.append('vendor', checkbox.value);
     });
     
     document.querySelectorAll('input[name="statuses"]:checked').forEach(function(checkbox) {
-      params.append('statuses', checkbox.value);
+      params.append('status', checkbox.value);
     });
     
     document.querySelectorAll('input[name="location"]:checked').forEach(function(checkbox) {
@@ -777,7 +777,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     
     document.querySelectorAll('input[name="transport_type"]:checked').forEach(function(checkbox) {
-      params.append('transport_type', checkbox.value);
+      params.append('transporttype', checkbox.value);
     });
     
     // Always include these fields
