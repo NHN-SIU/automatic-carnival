@@ -1,7 +1,9 @@
 """Views for praksis_nhn_nautobot."""
 
 from nautobot.apps.views import NautobotUIViewSet
+from nautobot.apps.ui import SectionChoices, ObjectFieldsPanel, ObjectDetailContent, Button, DropdownButton
 from nautobot.core.views import generic
+from nautobot.core.choices import ButtonColorChoices
 from django.views.generic import DetailView, View, TemplateView
 from django.shortcuts import render
 from django.http import JsonResponse
@@ -33,6 +35,157 @@ class SambandUIViewSet(NautobotUIViewSet):
     queryset = models.Samband.objects.all()
     serializer_class = serializers.SambandSerializer
     table_class = tables.SambandTable
+
+    # Resource for ObjectDetailContent:
+    #https://docs.nautobot.com/projects/core/en/stable/development/core/ui-component-framework/#basic-setup
+    object_detail_content = ObjectDetailContent(
+        panels = [
+            # 🧩 Basic Info
+            ObjectFieldsPanel(
+                label="Basic Information",
+                weight=100,
+                section=SectionChoices.LEFT_HALF,
+                fields=[
+                    "name", "name_prefix", "type", "type_id", "status", "status_id",
+                ],
+            ),
+
+            # 📍 Location Info
+            ObjectFieldsPanel(
+                label="Location",
+                weight=110,
+                section=SectionChoices.LEFT_HALF,
+                fields=[
+                    "location", "location_id", "location_type",
+                ],
+            ),
+
+            # 📦 Point of Presence A
+            ObjectFieldsPanel(
+                label="Point of Presence A",
+                weight=120,
+                section=SectionChoices.LEFT_HALF,
+                fields=[
+                    "pop_a_address_string", "pop_a_category", "pop_a_geo_string",
+                    "pop_a_map_url", "pop_a_room",
+                ],
+            ),
+
+            # 📦 Point of Presence B
+            ObjectFieldsPanel(
+                label="Point of Presence B",
+                weight=130,
+                section=SectionChoices.LEFT_HALF,
+                fields=[
+                    "pop_b_address_string", "pop_b_category", "pop_b_geo_string",
+                    "pop_b_map_url", "pop_b_room",
+                ],
+            ),
+
+            # 📶 Bandwidth
+            ObjectFieldsPanel(
+                label="Bandwidth",
+                weight=140,
+                section=SectionChoices.RIGHT_HALF,
+                fields=[
+                    "bandwidth_down", "bandwidth_up", "bandwidth_string",
+                ],
+            ),
+
+            # 💰 Costs
+            ObjectFieldsPanel(
+                label="Cost Information",
+                weight=150,
+                section=SectionChoices.RIGHT_HALF,
+                fields=[
+                    "cost_in", "cost_out", "initial_cost", "express_cost",
+                    "dekningsbidrag", "dekningsgrad",
+                ],
+            ),
+
+            # 🕒 Dates
+            ObjectFieldsPanel(
+                label="Dates",
+                weight=160,
+                section=SectionChoices.RIGHT_HALF,
+                fields=[
+                    "order_date", "desired_delivery_date", "actually_delivery_date",
+                    "order_delivery_date", "install_date", "live_date",
+                    "start_invoice_date", "termination_date", "termination_order_date",
+                ],
+            ),
+
+            # 🏢 Vendor
+            ObjectFieldsPanel(
+                label="Vendor",
+                weight=170,
+                section=SectionChoices.RIGHT_HALF,
+                fields=[
+                    "vendor", "vendor_id",
+                ],
+            ),
+
+            # 🧾 References
+            ObjectFieldsPanel(
+                label="Reference Numbers",
+                weight=180,
+                section=SectionChoices.RIGHT_HALF,
+                fields=[
+                    "sambandsnummer", "smbnr_nhn", "smbnr_orig", "smbnr_prefix",
+                ],
+            ),
+
+            # 🔗 Relationships & Extras
+            ObjectFieldsPanel(
+                label="Relationships & Metadata",
+                weight=190,
+                section=SectionChoices.RIGHT_HALF,
+                fields=[
+                    "transporttype", "transporttype_id", "connection_url",
+                    "details_included", "parents",
+                ],
+            ),
+        ],
+        extra_buttons=[
+            Button(
+                weight=100,
+                label="Map",
+                icon="mdi-map-marker",
+                link_name="plugins:praksis_nhn_nautobot:samband_map",
+                color=ButtonColorChoices.BLUE
+            ),
+            Button(
+                weight=125,
+                label="Graph",
+                icon="mdi-chart-histogram",
+                link_name="plugins:praksis_nhn_nautobot:Samband_graph",
+                color=ButtonColorChoices.BLUE
+            ),
+            DropdownButton(
+                weight=150,
+                label="dropdown",
+                children=[
+                    Button(
+                        weight=100,
+                        label="Map",
+                        icon="mdi-map-marker",
+                        link_name="plugins:praksis_nhn_nautobot:samband_map",
+                        color=ButtonColorChoices.BLUE
+                    ),
+                    Button(
+                        weight=150,
+                        label="Graph",
+                        icon="mdi-chart-histogram",
+                        link_name="plugins:praksis_nhn_nautobot:Samband_graph",
+                        color=ButtonColorChoices.BLUE
+                    ),
+                ]
+            )
+        ],
+        # TODO implement drop-down button
+    )
+
+
 
 class SambandGraphView(generic.ObjectView):
     """Graph visualization for Samband."""

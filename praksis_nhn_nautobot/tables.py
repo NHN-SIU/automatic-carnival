@@ -81,10 +81,10 @@ class SambandTable(BaseTable):
         verbose_name="Location"
     )
     type = tables.Column()
-    location_type = tables.Column()
+    location_type = tables.Column(verbose_name="Lokasjon type")
     vendor = tables.Column()
-    transporttype = tables.Column()
-    parents = tables.TemplateColumn(
+    transporttype = tables.Column(verbose_name="Transport type")
+    parents = TemplateColumn(
         template_code="""
             {% for parent in record.parents.all %}
                 <a href="{{ parent.get_absolute_url }}">{{ parent.name }}</a>{% if not forloop.last %}, {% endif %}
@@ -93,7 +93,7 @@ class SambandTable(BaseTable):
             {% endfor %}
         """,
         orderable=True,
-        verbose_name="Parent",
+        verbose_name="Parent Circuit",
     )
 
     graph = tables.TemplateColumn(
@@ -140,8 +140,7 @@ class SambandTable(BaseTable):
             "vendor",
             "transporttype",
             "parents",
-            # "map",
-            # "graph",
             "map",
+            "graph",
             "actions",
         )
