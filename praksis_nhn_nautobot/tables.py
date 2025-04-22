@@ -113,11 +113,9 @@ class SambandTable(BaseTable):
 
     
     # Add a custom map button column
-    # Update your map column in tables.py
     map = tables.TemplateColumn(
         template_code="""
-        {% load nhn_filters %}
-        <a href="{% url 'plugins:praksis_nhn_nautobot:samband_map' record.pk %}{% if_has_filters %}" class="btn btn-sm btn-primary" title="View on Map">
+        <a href="{% url 'plugins:praksis_nhn_nautobot:samband_map' record.pk %}" class="btn btn-sm btn-primary" title="View Map">
             <i class="mdi mdi-map-marker"></i>
         </a>
         """,
