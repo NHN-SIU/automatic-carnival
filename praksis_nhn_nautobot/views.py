@@ -514,85 +514,6 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     r = 6371  # Radius of Earth in kilometers
     return c * r
 
-
-class SambandMapView(DetailView):
-    """View for displaying a map for a single Samband instance."""
-    model = Samband
-    template_name = "praksis_nhn_nautobot/samband_map.html"
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        samband = self.get_object()
-        
-        # Process the single samband into map features
-        features = []
-        connection_points = []
-        
-        # Process Point A
-        if samband.pop_a_geo_string:
-            a_lat, a_lng = parse_geo_coordinates(samband.pop_a_geo_string)
-            if a_lat is not None and a_lng is not None:
-                point_data = {
-                    'type': 'point',
-                    'point_type': 'A',
-                    'location': [a_lat, a_lng],
-                    'name': samband.name,
-                    'address': samband.pop_a_address_string,
-                    'category': samband.pop_a_category,
-                    'room': samband.pop_a_room,
-                    'id': str(samband.pk)
-                }
-                features.append(point_data)
-                connection_points.append([a_lat, a_lng])
-        
-        # Process Point B
-        if samband.pop_b_geo_string:
-            b_lat, b_lng = parse_geo_coordinates(samband.pop_b_geo_string)
-            if b_lat is not None and b_lng is not None:
-                point_data = {
-                    'type': 'point',
-                    'point_type': 'B',
-                    'location': [b_lat, b_lng],
-                    'name': samband.name,
-                    'address': samband.pop_b_address_string,
-                    'category': samband.pop_b_category,
-                    'room': samband.pop_b_room,
-                    'id': str(samband.pk)
-                }
-                features.append(point_data)
-                connection_points.append([b_lat, b_lng])
-        
-        # Add connection line if both points exist
-        if len(connection_points) == 2:
-            line_data = {
-                'type': 'line',
-                'points': connection_points,
-                'name': samband.name,
-                'id': str(samband.pk)
-            }
-            features.append(line_data)
-        
-        # Add samband details and map features to context
-        context['samband'] = samband
-        context['map_data'] = {
-            'features': features,
-            'count': 1,
-            'samband_details': {
-                'name': samband.name,
-                'vendor': samband.vendor,
-                'status': samband.status,
-                'bandwidth': samband.bandwidth_string,
-                'reference': samband.sambandsnummer,
-                'type_name': samband.type,
-                'location': samband.location,
-                'location_type': samband.location_type,
-                'transport_type': samband.transporttype
-            }
-        }
-        
-        return context
-
-
 class SambandMapDataAPIView(View):
     """API view that returns sambands data as JSON for client-side rendering."""
     
@@ -607,7 +528,55 @@ class SambandMapDataAPIView(View):
         if connection_id:
             try:
                 samband = Samband.objects.get(pk=connection_id)
-                # Return detailed connection information
+                
+                # Parse coordinates
+                point_a_coords = None
+                if samband.pop_a_geo_string:
+                    a_lat, a_lng = parse_geo_coordinates(samband.pop_a_geo_string)
+                    if a_lat is not None and a_lng is not None:
+                        point_a_coords = [a_lat, a_lng]
+                
+                point_b_coords = None
+                if samband.pop_b_geo_string:
+                    b_lat, b_lng = parse_geo_coordinates(samband.pop_b_geo_string)
+                    if b_lat is not None and b_lng is not None:
+                        point_b_coords = [b_lat, b_lng]
+                
+                # Create map features for this connection
+                features = []
+                
+                # Add point features if coordinates are valid
+                if point_a_coords:
+                    features.append({
+                        'type': 'point',
+                        'point_type': 'A',
+                        'name': samband.name,
+                        'location': point_a_coords,
+                        'address': samband.pop_a_address_string,
+                        'category': samband.pop_a_category,
+                        'room': samband.pop_a_room
+                    })
+                
+                if point_b_coords:
+                    features.append({
+                        'type': 'point',
+                        'point_type': 'B',
+                        'name': samband.name,
+                        'location': point_b_coords,
+                        'address': samband.pop_b_address_string, 
+                        'category': samband.pop_b_category,
+                        'room': samband.pop_b_room
+                    })
+                
+                # Add connection line if both points are valid
+                if point_a_coords and point_b_coords:
+                    features.append({
+                        'type': 'line',
+                        'name': samband.name,
+                        'points': [point_a_coords, point_b_coords]
+                    })
+                
+                # Return detailed connection information with map features
                 return JsonResponse({
                     'name': samband.name,
                     'vendor': samband.vendor,
@@ -624,11 +593,12 @@ class SambandMapDataAPIView(View):
                     'location': samband.location,
                     'location_type': samband.location_type,
                     'transport_type': samband.transporttype,
+                    'features': features  # Add map features
                 })
             except Samband.DoesNotExist:
                 return JsonResponse({'error': 'Connection not found'}, status=404)
         
-        # Handle multiple filter selections
+        # Handle multiple filter selections (keep existing filter code)
         vendors = request.GET.getlist('vendors')
         statuses = request.GET.getlist('statuses')
         citylist = request.GET.getlist('location')
@@ -638,7 +608,7 @@ class SambandMapDataAPIView(View):
         # Start with all sambands
         sambands = Samband.objects.all()
         
-        # Apply vendor and status filters
+        # Apply vendor and status filters (keep existing filter code)
         if vendors:
             sambands = sambands.filter(vendor__in=vendors)
             
@@ -654,7 +624,7 @@ class SambandMapDataAPIView(View):
         if transport_types:
             sambands = sambands.filter(transporttype__in=transport_types)
         
-        # Process distance filtering
+        # Process distance filtering (keep existing distance calculation code)
         if lat and lng and radius:
             try:
                 center_lat = float(lat)
@@ -692,68 +662,80 @@ class SambandMapDataAPIView(View):
                 # Log the error for debugging
                 print(f"Error processing geo filter: {e}")
         
-        # Build response data with minimal information
-        features = []
-        center_points = []
+
+        include_fields = request.GET.getlist('include_fields', [])
         
-        # Process each samband
+        connections = []
+        
+        # Process each samband for the new format
         for samband in sambands:
-            connection_points = []
-            
-            # Process Point A with minimal data
+            # Extract coordinates for both points
+            point_a_coords = None
             if samband.pop_a_geo_string:
                 a_lat, a_lng = parse_geo_coordinates(samband.pop_a_geo_string)
                 if a_lat is not None and a_lng is not None:
-                    point_data = {
-                        'type': 'point',
-                        'point_type': 'A',
-                        'location': [a_lat, a_lng],
-                        'name': samband.name,
-                        'id': str(samband.pk)
-                    }
-                    features.append(point_data)
-                    connection_points.append([a_lat, a_lng])
-                    center_points.append([a_lat, a_lng])
+                    point_a_coords = [a_lat, a_lng]
             
-            # Process Point B with minimal data
+            point_b_coords = None
             if samband.pop_b_geo_string:
                 b_lat, b_lng = parse_geo_coordinates(samband.pop_b_geo_string)
                 if b_lat is not None and b_lng is not None:
-                    point_data = {
-                        'type': 'point',
-                        'point_type': 'B',
-                        'location': [b_lat, b_lng],
-                        'name': samband.name,
-                        'id': str(samband.pk)
-                    }
-                    features.append(point_data)
-                    connection_points.append([b_lat, b_lng])
-                    center_points.append([b_lat, b_lng])
+                    point_b_coords = [b_lat, b_lng]
             
-            # Add connection line with minimal data
-            if len(connection_points) == 2:
-                line_data = {
-                    'type': 'line',
-                    'points': connection_points,
+            # Only include the connection if both points have valid coordinates
+            if point_a_coords and point_b_coords:
+                # Create the basic connection object with minimal data
+                connection = {
+                    'id': str(samband.pk),
                     'name': samband.name,
-                    'id': str(samband.pk)
+                    'point_a': {
+                        'name': samband.name,
+                        'location': point_a_coords,
+                        'category': samband.pop_a_category,
+                        # Remove address and room fields to reduce payload size
+                    },
+                    'point_b': {
+                        'name': samband.name,
+                        'location': point_b_coords,
+                        'category': samband.pop_b_category,
+                        # Remove address and room fields to reduce payload size
+                    }
                 }
-                features.append(line_data)
+                
+                # Add any additional requested fields
+                for field in include_fields:
+                    if field == 'status' and samband.status:
+                        connection['status'] = samband.status
+                    elif field == 'vendor' and samband.vendor:
+                        connection['vendor'] = samband.vendor
+                    elif field == 'bandwidth' and samband.bandwidth_string:
+                        connection['bandwidth'] = samband.bandwidth_string
+                    elif field == 'reference' and samband.sambandsnummer:
+                        connection['reference'] = samband.sambandsnummer
+                    elif field == 'type' and samband.type:
+                        connection['type'] = samband.type
+                    elif field == 'location' and samband.location:
+                        connection['location'] = samband.location
+                    elif field == 'location_type' and samband.location_type:
+                        connection['location_type'] = samband.location_type
+                    elif field == 'transport_type' and samband.transporttype:
+                        connection['transport_type'] = samband.transporttype
+                
+                connections.append(connection)
+        
+        # Return the new compact format
+        response_data = {
+            'connections': connections,
+            'count': len(connections),
+            'filter_active': bool(vendors or statuses or citylist or location_types or transport_types or (lat and lng and radius))
+        }
         
         # Add a radius circle if filtering by location
         if lat and lng and radius:
-            features.append({
-                'type': 'radius',
+            response_data['radius'] = {
                 'location': [float(lat), float(lng)],
-                'radius': float(radius) * 1000  # Convert to meters
-            })
-        
-        # Return the minimal data
-        response_data = {
-            'features': features,
-            'count': len(sambands),
-            'filter_active': bool(vendors or statuses or citylist or location_types or transport_types or (lat and lng and radius))
-        }
+                'radius_km': float(radius)
+            }
         
         return JsonResponse(response_data)
 
@@ -824,8 +806,26 @@ class SambandClientMapView(TemplateView):
         if radius:
             context['radius'] = radius
         else:
-            context['radius'] = '50'  # Default radius
+            context['radius'] = '100'
         
         context['title'] = 'Network Connections Map'
+        
+        return context
+
+class SambandMapView(TemplateView):
+    """View for displaying a map of a single connection."""
+    template_name = "praksis_nhn_nautobot/single_samband_view.html"
+    
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        
+        # Get the connection ID from the URL
+        pk = self.kwargs.get('pk')
+        
+        # Add connection ID to the context - this is all you need for JavaScript to fetch data
+        context['connection_id'] = pk
+        
+        # Add a generic title (this will be updated via JavaScript)
+        context['title'] = "Connection Map"
         
         return context

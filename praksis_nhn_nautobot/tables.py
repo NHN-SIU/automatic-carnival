@@ -71,7 +71,15 @@ class SambandTable(BaseTable):
         orderable=True,
     )
 
-    location = tables.Column(verbose_name="Lokasjon")
+    location = tables.TemplateColumn(
+        template_code="""
+            <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?location={{ record.location|urlencode }}" title="View connections in {{ record.location }}">
+                {{ record.location }}
+            </a>
+        """,
+        orderable=True,
+        verbose_name="Location"
+    )
     type = tables.Column()
     location_type = tables.Column(verbose_name="Lokasjon type")
     vendor = tables.Column()
@@ -88,16 +96,15 @@ class SambandTable(BaseTable):
         verbose_name="Parent Circuit",
     )
 
-    graph = TemplateColumn(
+    graph = tables.TemplateColumn(
         template_code="""
-            <a href="{% url 'plugins:praksis_nhn_nautobot:Samband_graph' record.pk %}" class="btn btn-sm btn-primary" title="View Graph">
-                <i class="mdi mdi-chart-histogram"></i>
-            </a>
+        <a href="{% url 'plugins:praksis_nhn_nautobot:samband_graph' record.pk %}" class="btn btn-sm btn-primary" title="View Graph">
+            <i class="mdi mdi-graph"></i>
+        </a>
         """,
         orderable=False,
         verbose_name="Graph"
     )
-
     
     # Add a custom map button column
     map = tables.TemplateColumn(
@@ -109,6 +116,7 @@ class SambandTable(BaseTable):
         orderable=False,
         verbose_name="Map"
     )
+    
     
     actions = ButtonsColumn(
         models.Samband,

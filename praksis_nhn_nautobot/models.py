@@ -110,23 +110,14 @@ class Samband(PrimaryModel):
     termination_date = models.DateTimeField(null=True, blank=True)
     termination_order_date = models.DateTimeField(null=True, blank=True)
 
-    # Vendor Information
-    VENDOR_CHOISES = [
-        ("Broadnet", "Broadnet"),
-        ("GlobalConnect", "GlobalCOnnect"),
-        ("Telenor", "Telenor"),
-        ("Telia", "Telia"),
-    ]
+
     vendor = models.CharField(max_length=100, blank=True, help_text="Vendor providing the connection")
     vendor_id = models.IntegerField(null=True, blank=True, help_text="Identifier for the vendor")
 
     # Additional Information
     connection_url = models.URLField(null=True, blank=True, help_text="URL to the connection details")
     details_included = models.BooleanField(default=False)
-    TRANSPORTTYPE_CHOICES = [
-        ("Fiber", "Fiber"),
-        ("Microwave", "Microwave"),
-    ]
+
     transporttype = models.CharField(max_length=50, blank=True, help_text="Type of transport connection")
     transporttype_id = models.IntegerField(null=True, blank=True, help_text="Identifier for transport type")
 
