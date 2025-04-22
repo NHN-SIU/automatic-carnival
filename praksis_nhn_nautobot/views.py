@@ -158,7 +158,7 @@ class SambandUIViewSet(NautobotUIViewSet):
                 weight=125,
                 label="Graph",
                 icon="mdi-chart-histogram",
-                link_name="plugins:praksis_nhn_nautobot:Samband_graph",
+                link_name="plugins:praksis_nhn_nautobot:samband_graph",
                 color=ButtonColorChoices.BLUE
             ),
             DropdownButton(
@@ -176,7 +176,7 @@ class SambandUIViewSet(NautobotUIViewSet):
                         weight=150,
                         label="Graph",
                         icon="mdi-chart-histogram",
-                        link_name="plugins:praksis_nhn_nautobot:Samband_graph",
+                        link_name="plugins:praksis_nhn_nautobot:samband_graph",
                         color=ButtonColorChoices.BLUE
                     ),
                 ]
