@@ -71,12 +71,20 @@ class SambandTable(BaseTable):
         orderable=True,
     )
 
-    location = tables.Column()
+    location = tables.TemplateColumn(
+        template_code="""
+            <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?location={{ record.location|urlencode }}" title="View connections in {{ record.location }}">
+                {{ record.location }}
+            </a>
+        """,
+        orderable=True,
+        verbose_name="Location"
+    )
     type = tables.Column()
     location_type = tables.Column()
     vendor = tables.Column()
     transporttype = tables.Column()
-    parents = TemplateColumn(
+    parents = tables.TemplateColumn(
         template_code="""
             {% for parent in record.parents.all %}
                 <a href="{{ parent.get_absolute_url }}">{{ parent.name }}</a>{% if not forloop.last %}, {% endif %}
@@ -105,14 +113,17 @@ class SambandTable(BaseTable):
 
     
     # Add a custom map button column
+    # Update your map column in tables.py
     map = tables.TemplateColumn(
         template_code="""
-        <a href="{% url 'plugins:praksis_nhn_nautobot:samband_map' record.pk %}" class="btn btn-sm btn-primary" title="View Map">
+        {% load nhn_filters %}
+        <a href="{% url 'plugins:praksis_nhn_nautobot:samband_map' record.pk %}{% if_has_filters %}" class="btn btn-sm btn-primary" title="View on Map">
             <i class="mdi mdi-map-marker"></i>
         </a>
         """,
         verbose_name="Map"
     )
+    
     
     actions = ButtonsColumn(
         models.Samband,
