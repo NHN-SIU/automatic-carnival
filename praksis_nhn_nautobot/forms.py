@@ -133,7 +133,6 @@ class SambandFilterForm(NautobotFilterForm):
     transporttype = forms.ChoiceField(
         required=False,
         label="Transport Type",
-        widget=forms.DateInput(attrs={"type": "date"}),
     )
     live_date__gte = forms.DateField(
         required=False,

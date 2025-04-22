@@ -624,8 +624,8 @@ class SambandMapDataAPIView(View):
                         connection['location'] = samband.location
                     elif field == 'location_type' and samband.location_type:
                         connection['location_type'] = samband.location_type
-                    elif field == 'transport_type' and samband.transporttype:
-                        connection['transport_type'] = samband.transporttype
+                    elif field == 'transporttype' and samband.transporttype:
+                        connection['transporttype'] = samband.transporttype
                 
                 connections.append(connection)
         
