@@ -51,7 +51,7 @@
           {% if vendors %}
             {% for vendor in vendors %}
             <div>
-              <input type="checkbox" id="vendor-{{ forloop.counter }}" name="vendors" value="{{ vendor }}" 
+              <input type="checkbox" id="vendor-{{ forloop.counter }}" name="vendor" value="{{ vendor }}" 
                      {% if vendor in selected_vendors %}checked{% endif %}> 
               <label for="vendor-{{ forloop.counter }}" style="font-size: 13px;">{{ vendor }}</label>
             </div>
@@ -69,7 +69,7 @@
           {% if statuses %}
             {% for status in statuses %}
             <div>
-              <input type="checkbox" id="status-{{ forloop.counter }}" name="statuses" value="{{ status }}"
+              <input type="checkbox" id="status-{{ forloop.counter }}" name="status" value="{{ status }}"
                      {% if status in selected_statuses %}checked{% endif %}> 
               <label for="status-{{ forloop.counter }}" style="font-size: 13px;">{{ status }}</label>
             </div>
@@ -123,7 +123,7 @@
           {% if transport_types %}
             {% for transport_type in transport_types %}
             <div>
-              <input type="checkbox" id="trans-type-{{ forloop.counter }}" name="transport_type" value="{{ transport_type }}"
+              <input type="checkbox" id="trans-type-{{ forloop.counter }}" name="transporttype" value="{{ transport_type }}"
                      {% if transport_type in selected_transport_types %}checked{% endif %}> 
               <label for="trans-type-{{ forloop.counter }}" style="font-size: 13px;">{{ transport_type }}</label>
             </div>
@@ -760,11 +760,11 @@ document.addEventListener('DOMContentLoaded', function() {
       params.append('radius', radius || '50');
     }
     
-    document.querySelectorAll('input[name="vendors"]:checked').forEach(function(checkbox) {
+    document.querySelectorAll('input[name="vendor"]:checked').forEach(function(checkbox) {
       params.append('vendor', checkbox.value);
     });
     
-    document.querySelectorAll('input[name="statuses"]:checked').forEach(function(checkbox) {
+    document.querySelectorAll('input[name="status"]:checked').forEach(function(checkbox) {
       params.append('status', checkbox.value);
     });
     
@@ -776,7 +776,7 @@ document.addEventListener('DOMContentLoaded', function() {
       params.append('location_type', checkbox.value);
     });
     
-    document.querySelectorAll('input[name="transport_type"]:checked').forEach(function(checkbox) {
+    document.querySelectorAll('input[name="transporttype"]:checked').forEach(function(checkbox) {
       params.append('transporttype', checkbox.value);
     });
     

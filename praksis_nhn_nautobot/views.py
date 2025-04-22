@@ -505,11 +505,11 @@ class SambandMapDataAPIView(View):
                 return JsonResponse({'error': 'Connection not found'}, status=404)
         
         # Handle multiple filter selections (keep existing filter code)
-        vendors = request.GET.getlist('vendors')
-        statuses = request.GET.getlist('statuses')
+        vendors = request.GET.getlist('vendor')
+        statuses = request.GET.getlist('status')
         citylist = request.GET.getlist('location')
         location_types = request.GET.getlist('location_type')
-        transport_types = request.GET.getlist('transport_type')
+        transport_types = request.GET.getlist('transporttype')
         
         # Start with all sambands
         sambands = Samband.objects.all()
