@@ -5,6 +5,15 @@ from nautobot.core.views import generic
 from django.views.generic import DetailView, View, TemplateView
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.core.cache import cache
+from django.utils.http import urlencode
+
+from django.shortcuts import get_object_or_404
+from . import graph_utils # Import the new utility module
+
+from praksis_nhn_nautobot.api.serializers import SambandSerializer
+
+from praksis_nhn_nautobot.services.graph_service import SambandGraphService
 
 from praksis_nhn_nautobot import filters, forms, models, tables
 from praksis_nhn_nautobot.api import serializers
@@ -34,7 +43,18 @@ class SambandUIViewSet(NautobotUIViewSet):
     serializer_class = serializers.SambandSerializer
     table_class = tables.SambandTable
 
-class SambandGraphView(generic.ObjectView):
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        if self.request.GET:
+            # Generate a cache key from the current filters
+            cache_key = f"samband_filtered_{urlencode(sorted(self.request.GET.items()))}"
+            # Store the queryset IDs in cache (can't pickle querysets directly)
+            object_ids = list(queryset.values_list('id', flat=True))
+            cache.set(cache_key, object_ids, 300)  # Cache for 5 minutes
+        
+        return queryset
+
+class SambandGraphFocusView(generic.ObjectView):
     """Graph visualization for Samband."""
     
     queryset = models.Samband.objects.all()
@@ -214,6 +234,89 @@ class SambandGraphView(generic.ObjectView):
                     is_parent, 
                     current_depth + 1
                 )
+
+class SambandPyvisFocusView(generic.ObjectView):
+    """PyVis Graph visualization for a single Samband."""
+    queryset = models.Samband.objects.all()
+    template_name = "praksis_nhn_nautobot/pyvis_focus_graph.html"
+
+    def get_extra_context(self, request, instance):
+        """Generate PyVis graph HTML and add to context."""
+        context = super().get_extra_context(request, instance)
+        depth = int(request.GET.get('depth', 1)) # Get depth from query param
+
+        # Generate the PyVis HTML using the utility function
+        pyvis_html = graph_utils.generate_focused_pyvis_html(instance.pk, depth=depth)
+
+        context['pyvis_graph_html'] = pyvis_html
+        context['current_depth'] = depth
+        context['depth_options'] = [1, 2, 3] # Or generate dynamically
+        return context
+
+class SambandGraphView(generic.View):
+    template_name = "praksis_nhn_nautobot/network_graph.html"
+
+    def get(self, request, *args, **kwargs):
+        """Handle GET requests."""
+        context = self.get_context_data(**kwargs)
+        return render(request, self.template_name, context)
+    
+    def get_queryset(self):        
+        if self.request.GET:
+            # Try to get cached results with the same key used in list view
+            cache_key = f"samband_filtered_{urlencode(sorted(self.request.GET.items()))}"
+            cached_ids = cache.get(cache_key)
+            
+            if cached_ids:
+                # Use the cached object IDs
+                return Samband.objects.filter(id__in=cached_ids)
+        
+        # If no cache or cache miss, fall back to filtering again
+        queryset = Samband.objects.all()        
+        return queryset
+    
+    def get_context_data(self, **kwargs):
+        context = {} 
+        queryset = self.get_queryset()
+
+        serialized_data = SambandSerializer(queryset, many=True, context={'request': self.request}).data
+        graph_data = SambandGraphService.create_network_graph(serialized_data)
+        
+        # Visualization options
+        options = {
+            "nodes": {
+                "shape": "dot",
+                "size": 20,
+                "font": {
+                    "size": 14,
+                    "face": "Tahoma",
+                    "multi": True,
+                    "align": "center",
+                },
+                "labelHighlightBold": False,
+            },
+            "edges": {
+                "arrows": {
+                    "to": {"enabled": True, "scaleFactor": 0.5}
+                },
+                "color": {"inherit": False},
+                "smooth": {"enabled": True, "type": "dynamic"}
+            },
+            "physics": {
+                "enabled": False,
+            },
+            "interaction": {
+                "hover": True,
+                "multiselect": False,
+                "dragNodes": False
+            }
+        }
+        
+        # Add to context (convert Python objects to JSON strings for the template)
+        context['network_data'] = graph_data
+        context['network_options'] = options
+        
+        return context
 
 def parse_geo_coordinates(geo_string):
     """Parse geographic coordinates in various formats."""

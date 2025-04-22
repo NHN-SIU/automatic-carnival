@@ -10,4 +10,10 @@
     <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}" class="btn btn-primary">
         Map
     </a>
+    {% if request.GET %}
+    <a href="{% url 'plugins:praksis_nhn_nautobot:samband_graph' %}?{{ request.GET.urlencode }}" class="btn btn-primary">
+        <i class="mdi mdi-graph"></i>
+        View selection in graph
+    </a>
+    {% endif %}
 {% endblock buttons %}

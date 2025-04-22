@@ -90,7 +90,7 @@ class SambandTable(BaseTable):
 
     graph = tables.TemplateColumn(
         template_code="""
-        <a href="{% url 'plugins:praksis_nhn_nautobot:samband_graph' record.pk %}" class="btn btn-sm btn-primary" title="View Graph">
+        <a href="{% url 'plugins:praksis_nhn_nautobot:samband_graph_focus' record.pk %}" class="btn btn-sm btn-primary" title="View Graph">
             <i class="mdi mdi-graph"></i>
         </a>
         """,
