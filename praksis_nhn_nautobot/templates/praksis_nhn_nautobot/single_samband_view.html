@@ -69,11 +69,6 @@
           <!-- Map container -->
           <div id="connection-map" style="height: 500px; width: 100%;"></div>
           
-          <!-- Error message overlay -->
-          <div id="map-error" class="position-absolute top-50 start-50 translate-middle bg-white p-3 rounded shadow-sm d-none">
-            <div class="text-danger mb-2"><i class="fas fa-exclamation-circle"></i> Error loading map data</div>
-            <p class="mb-0 small" id="map-error-text"></p>
-          </div>
         </div>
       </div>
     </div>
@@ -218,54 +213,85 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById(elementId).innerHTML = `<i class="${config.icon}" style="color: ${config.color}; font-size: 14px;"></i>`;
   }
   
-  // Parse coordinates from a string
-  function parseCoordinates(geoString) {
-    if (!geoString) return null;
+  // Render map for the connection
+  function renderConnectionMap(data) {
+    // Initialize map if not already done
+    if (!map) map = initMap();
     
-    // Try direct comma-separated format first
-    if (geoString.includes(',')) {
-      const parts = geoString.split(',').map(p => p.trim());
-      if (parts.length >= 2) {
-        const lat = parseFloat(parts[0]);
-        const lng = parseFloat(parts[1]);
-        if (!isNaN(lat) && !isNaN(lng)) {
-          return [lat, lng];
-        }
-      }
+    const bounds = [];
+    const statusColor = statusColors[data.status] || statusColors.Unknown;
+    
+    // Use the coordinates directly from our simplified API response
+    const pointACoords = data.pop_a_coords;
+    const pointBCoords = data.pop_b_coords;
+    
+    // Add markers and line if coordinates are valid
+    if (pointACoords) {
+      L.marker(pointACoords, {
+        icon: getLocationIcon(data.pop_a_category)
+      }).bindPopup(`
+        <div style="min-width: 200px;">
+          <strong>${data.name} - Point A</strong><br>
+          ${data.pop_a_address ? `<strong>Address:</strong> ${data.pop_a_address}<br>` : ''}
+          ${data.pop_a_category ? `<strong>Category:</strong> ${data.pop_a_category}<br>` : ''}
+          ${data.pop_a_room ? `<strong>Room:</strong> ${data.pop_a_room}` : ''}
+        </div>
+      `).addTo(map);
+      
+      bounds.push(pointACoords);
     }
     
-    // Try to extract from an address string with commas (look for patterns like "60.1234, 5.6789")
-    const matches = geoString.match(/(\d+\.\d+)[,\s]+(\d+\.\d+)/);
-    if (matches && matches.length >= 3) {
-      const lat = parseFloat(matches[1]);
-      const lng = parseFloat(matches[2]);
-      if (!isNaN(lat) && !isNaN(lng)) {
-        return [lat, lng];
-      }
+    if (pointBCoords) {
+      L.marker(pointBCoords, {
+        icon: getLocationIcon(data.pop_b_category)
+      }).bindPopup(`
+        <div style="min-width: 200px;">
+          <strong>${data.name} - Point B</strong><br>
+          ${data.pop_b_address ? `<strong>Address:</strong> ${data.pop_b_address}<br>` : ''}
+          ${data.pop_b_category ? `<strong>Category:</strong> ${data.pop_b_category}<br>` : ''}
+          ${data.pop_b_room ? `<strong>Room:</strong> ${data.pop_b_room}` : ''}
+        </div>
+      `).addTo(map);
+      
+      bounds.push(pointBCoords);
     }
     
-    return null;
+    if (pointACoords && pointBCoords) {
+      L.polyline([pointACoords, pointBCoords], {
+        color: statusColor,
+        weight: 4,
+        opacity: 0.8,
+        smoothFactor: 1
+      }).bindPopup(`
+        <div style="min-width: 200px;">
+          <strong>${data.name}</strong><br>
+          <strong>Status:</strong> ${data.status || 'Unknown'}<br>
+          <strong>Vendor:</strong> ${data.vendor || 'Not specified'}<br>
+          <strong>Type:</strong> ${data.type_name || 'Not specified'}
+        </div>
+      `).addTo(map);
+    }
+    
+    // Set map view
+    if (bounds.length > 0) {
+      map.fitBounds(bounds, { padding: [30, 30] });
+    } else {
+      map.setView([65.4, 17.0], 5);
+      
+      // Show message if no valid coordinates
+      L.marker([65.4, 17.0])
+        .bindPopup("No valid coordinates available for this connection")
+        .addTo(map)
+        .openPopup();
+    }
   }
   
-  // Show map error
-  function showMapError(message) {
-    const errorEl = document.getElementById('map-error');
-    document.getElementById('map-error-text').textContent = message;
-    errorEl.classList.remove('d-none');
-  }
-  
-  // Hide map error
-  function hideMapError() {
-    document.getElementById('map-error').classList.add('d-none');
-  }
-
   // Populate details for a connection point
   function populatePointDetails(elementId, data, isPointA) {
     const address = isPointA ? data.pop_a_address : data.pop_b_address;
     const category = isPointA ? data.pop_a_category : data.pop_b_category;
     const room = isPointA ? data.pop_a_room : data.pop_b_room;
-
-    console.log('all data:', data);
+    const coords = isPointA ? data.pop_a_coords : data.pop_b_coords;
     
     let html = '';
     
@@ -281,15 +307,8 @@ document.addEventListener('DOMContentLoaded', function() {
       html += `<p><strong>Room:</strong> ${room}</p>`;
     }
     
-    // Get coordinates from the features array instead
-    const pointFeature = data.features?.find(f => 
-      f.type === 'point' && 
-      f.point_type === (isPointA ? 'A' : 'B')
-    );
-    
-    if (pointFeature && pointFeature.location) {
-      const [lat, lng] = pointFeature.location;
-      html += `<p><strong>Coordinates:</strong> ${lat}, ${lng}</p>`;
+    if (coords) {
+      html += `<p><strong>Coordinates:</strong> ${coords[0]}, ${coords[1]}</p>`;
     }
     
     if (!html) {
@@ -345,8 +364,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const pointBFeature = data.features?.find(f => f.type === 'point' && f.point_type === 'B');
     
     // Update endpoint icons with the specific category for each point
-    renderLocationIcon('point-a-icon', pointAFeature?.category || data.pop_a_category);
-    renderLocationIcon('point-b-icon', pointBFeature?.category || data.pop_b_category);
+    renderLocationIcon('point-a-icon', data.pop_a_category);
+    renderLocationIcon('point-b-icon', data.pop_b_category);
     
     // Update endpoint details
     populatePointDetails('point-a-details', data, true);
@@ -355,99 +374,32 @@ document.addEventListener('DOMContentLoaded', function() {
     return data;
   }
   
-  // Render map features based on connection data
-  function renderMapFeatures(features, data) {
-    // Initialize map if not already done
-    if (!map) map = initMap();
-    
-    const bounds = [];
-    const statusColor = statusColors[data.status] || statusColors.Unknown;
-    
-    // Hide any previous errors
-    hideMapError();
-    
-    // Process each feature (points and lines)
-    features.forEach(feature => {
-      if (feature.type === 'point') {
-        // Get the proper category for this point
-        const pointCategory = feature.category || 
-            (feature.point_type === 'A' ? data.pop_a_category : data.pop_b_category);
-        
-        // This is a point feature (A or B)
-        const marker = L.marker(feature.location, {
-          // Use point-specific category instead of global location_type
-          icon: getLocationIcon(pointCategory)
-        }).bindPopup(`
-          <div style="min-width: 200px;">
-            <strong>${feature.name} - Point ${feature.point_type}</strong><br>
-            ${feature.address ? `<strong>Address:</strong> ${feature.address}<br>` : ''}
-            ${feature.category ? `<strong>Category:</strong> ${feature.category}<br>` : ''}
-            ${feature.room ? `<strong>Room:</strong> ${feature.room}` : ''}
-          </div>
-        `).addTo(map);
-        
-        bounds.push(feature.location);
-      } else if (feature.type === 'line') {
-        // This is a line connecting points
-        L.polyline(feature.points, {
-          color: statusColor,
-          weight: 4,
-          opacity: 0.8,
-          smoothFactor: 1
-        }).bindPopup(`
-          <div style="min-width: 200px;">
-            <strong>${feature.name}</strong><br>
-            <strong>Status:</strong> ${data.status || 'Unknown'}<br>
-            <strong>Vendor:</strong> ${data.vendor || 'Not specified'}<br>
-            <strong>Type:</strong> ${data.type_name || 'Not specified'}
-          </div>
-        `).addTo(map);
-      }
-    });
-    
-    // Set map view
-    if (bounds.length > 0) {
-      map.fitBounds(bounds, { padding: [30, 30] });
-    } else {
-      map.setView([65.4, 17.0], 5);
-      
-      // Show message if no valid coordinates
-      L.marker([65.4, 17.0])
-        .bindPopup("No valid coordinates available for this connection")
-        .addTo(map)
-        .openPopup();
-    }
-  }
-  
   // Fetch connection data and update page
   fetch(`/plugins/praksis-nhn-nautobot/samband/map-data/?connection_id=${connectionId}`)
-    .then(response => {
-      if (!response.ok) {
-        throw new Error(`Connection not found (Status: ${response.status})`);
-      }
-      return response.json();
-    })
-    .then(data => {
-      console.log('Raw data from API:', data);
-      
-      // Provide informative error if data structure is missing expected fields
-      if (!data) {
-        throw new Error('No data returned from API');
-      }
-      
-      if (!data.features) {
-        throw new Error('No features array found in the API response');
-      }
-      
-      updatePageWithConnectionData(data);
-      
-      // Use the features array for map rendering
-      if (data.features && data.features.length > 0) {
-        renderMapFeatures(data.features, data);
-      } else {
-        showMapError('No valid map features found for this connection');
-      }
-    })
+  .then(response => {
+    if (!response.ok) {
+      throw new Error(`Connection not found (Status: ${response.status})`);
+    }
+    return response.json();
+  })
+  .then(data => {
+    console.log('Raw data from API:', data);
+    
+    // Provide informative error if data structure is missing expected fields
+    if (!data) {
+      throw new Error('No data returned from API');
+    }
+    
+    // Check for required coordinates
+    if (!data.pop_a_coords && !data.pop_b_coords) {
+      console.warn('No valid coordinates found for this connection');
+    }
+    
+    updatePageWithConnectionData(data);
+    
+    // Use the simplified API response for map rendering
+    renderConnectionMap(data);
+  })
     .catch(error => {
       console.error('Error loading connection:', error);
       document.getElementById('connection-name').textContent = 'Error Loading Connection';
@@ -464,7 +416,6 @@ document.addEventListener('DOMContentLoaded', function() {
       // Show error on map
       if (!map) map = initMap();
       map.setView([65.4, 17.0], 5);
-      showMapError(error.message || 'Failed to load connection data.');
       
       // Show error in point details
       document.getElementById('point-a-details').innerHTML = '<p class="text-danger">Could not load point details</p>';

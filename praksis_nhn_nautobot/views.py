@@ -7,6 +7,7 @@ from nautobot.core.choices import ButtonColorChoices
 from django.views.generic import DetailView, View, TemplateView
 from django.shortcuts import render
 from django.http import JsonResponse
+from django.db.models import Q  # Import Q from django.db.models
 
 from praksis_nhn_nautobot import filters, forms, models, tables
 from praksis_nhn_nautobot.api import serializers
@@ -409,15 +410,13 @@ def parse_geo_coordinates(geo_string):
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     """Calculate the distance between two points using Haversine formula."""
-    # Convert decimal degrees to radians
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
     
-    # Haversine formula
     dlon = lon2 - lon1
     dlat = lat2 - lat1
     a = sin(dlat/2)**2 + cos(lat1) * cos(lat2) * sin(dlon/2)**2
     c = 2 * asin(sqrt(a))
-    r = 6371  # Radius of Earth in kilometers
+    r = 6371
     return c * r
 
 class SambandMapDataAPIView(View):
@@ -431,11 +430,13 @@ class SambandMapDataAPIView(View):
         
         # Handle connection detail request
         connection_id = request.GET.get('connection_id')
+
+        # this is for 1 specific connection
         if connection_id:
             try:
                 samband = Samband.objects.get(pk=connection_id)
                 
-                # Parse coordinates
+                # Parse coordinates - only do this once
                 point_a_coords = None
                 if samband.pop_a_geo_string:
                     a_lat, a_lng = parse_geo_coordinates(samband.pop_a_geo_string)
@@ -448,41 +449,7 @@ class SambandMapDataAPIView(View):
                     if b_lat is not None and b_lng is not None:
                         point_b_coords = [b_lat, b_lng]
                 
-                # Create map features for this connection
-                features = []
-                
-                # Add point features if coordinates are valid
-                if point_a_coords:
-                    features.append({
-                        'type': 'point',
-                        'point_type': 'A',
-                        'name': samband.name,
-                        'location': point_a_coords,
-                        'address': samband.pop_a_address_string,
-                        'category': samband.pop_a_category,
-                        'room': samband.pop_a_room
-                    })
-                
-                if point_b_coords:
-                    features.append({
-                        'type': 'point',
-                        'point_type': 'B',
-                        'name': samband.name,
-                        'location': point_b_coords,
-                        'address': samband.pop_b_address_string, 
-                        'category': samband.pop_b_category,
-                        'room': samband.pop_b_room
-                    })
-                
-                # Add connection line if both points are valid
-                if point_a_coords and point_b_coords:
-                    features.append({
-                        'type': 'line',
-                        'name': samband.name,
-                        'points': [point_a_coords, point_b_coords]
-                    })
-                
-                # Return detailed connection information with map features
+                # Return simplified connection information
                 return JsonResponse({
                     'name': samband.name,
                     'vendor': samband.vendor,
@@ -493,13 +460,14 @@ class SambandMapDataAPIView(View):
                     'pop_a_address': samband.pop_a_address_string,
                     'pop_a_category': samband.pop_a_category,
                     'pop_a_room': samband.pop_a_room,
+                    'pop_a_coords': point_a_coords,  # Just include coordinates directly
                     'pop_b_address': samband.pop_b_address_string,
                     'pop_b_category': samband.pop_b_category,
                     'pop_b_room': samband.pop_b_room,
+                    'pop_b_coords': point_b_coords,  # Just include coordinates directly
                     'location': samband.location,
                     'location_type': samband.location_type,
-                    'transport_type': samband.transporttype,
-                    'features': features  # Add map features
+                    'transport_type': samband.transporttype
                 })
             except Samband.DoesNotExist:
                 return JsonResponse({'error': 'Connection not found'}, status=404)
@@ -511,7 +479,7 @@ class SambandMapDataAPIView(View):
         location_types = request.GET.getlist('location_type')
         transport_types = request.GET.getlist('transporttype')
         
-        # Start with all sambands
+        # Start with all connections
         sambands = Samband.objects.all()
         
         # Apply vendor and status filters (keep existing filter code)
@@ -573,7 +541,6 @@ class SambandMapDataAPIView(View):
         
         connections = []
         
-        # Process each samband for the new format
         for samband in sambands:
             # Extract coordinates for both points
             point_a_coords = None
@@ -629,7 +596,6 @@ class SambandMapDataAPIView(View):
                 
                 connections.append(connection)
         
-        # Return the new compact format
         response_data = {
             'connections': connections,
             'count': len(connections),
@@ -735,3 +701,29 @@ class SambandMapView(TemplateView):
         context['title'] = "Connection Map"
         
         return context
+
+class SambandSearchSuggestionsView(View):
+    """Returns connection name suggestions for autocomplete."""
+    
+    def get(self, request):
+        query = request.GET.get('q', '').strip()
+        if not query or len(query) < 2:
+            return JsonResponse({'suggestions': []})
+            
+        # Search connections by name or location
+        connections = Samband.objects.filter(
+            Q(name__icontains=query) |  # Use Q directly, not models.Q
+            Q(location__icontains=query) |
+            Q(sambandsnummer__icontains=query)
+        )[:10]
+        
+        suggestions = []
+        for conn in connections:
+            suggestions.append({
+                'id': str(conn.pk),
+                'name': conn.name,
+                'location': conn.location,
+                'status': conn.status
+            })
+            
+        return JsonResponse({'suggestions': suggestions})
