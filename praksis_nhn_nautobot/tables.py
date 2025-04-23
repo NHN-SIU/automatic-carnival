@@ -77,7 +77,7 @@ class SambandTable(BaseTable):
             </a>
         """,
         orderable=True,
-        verbose_name="Location"
+        verbose_name="Location",
     )
     type = tables.Column()
     location_type = tables.Column(verbose_name="Lokasjon type")
@@ -102,7 +102,7 @@ class SambandTable(BaseTable):
         </a>
         """,
         orderable=False,
-        verbose_name="Graph"
+        verbose_name="Graph",
     )
 
     # Add a custom map button column
@@ -113,9 +113,8 @@ class SambandTable(BaseTable):
         </a>
         """,
         orderable=False,
-        verbose_name="Map"
+        verbose_name="Map",
     )
-
 
     actions = ButtonsColumn(
         models.Samband,
@@ -124,7 +123,6 @@ class SambandTable(BaseTable):
         # Option for modifying the pk for the action buttons:
         pk_field="pk",
     )
-
 
     class Meta(BaseTable.Meta):
         """Meta attributes."""

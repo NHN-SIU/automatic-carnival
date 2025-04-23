@@ -110,7 +110,6 @@ class Samband(PrimaryModel):
     termination_date = models.DateTimeField(null=True, blank=True)
     termination_order_date = models.DateTimeField(null=True, blank=True)
 
-
     vendor = models.CharField(max_length=100, blank=True, help_text="Vendor providing the connection")
     vendor_id = models.IntegerField(null=True, blank=True, help_text="Identifier for the vendor")
 

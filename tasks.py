@@ -770,6 +770,7 @@ def ruff(context, action=None, target=None, fix=False, output_format="concise"):
             command += "--check "
         command += " ".join(target)
         if not run_command(context, command, warn=True):
+            print("Ruff found issues with the code formatting.")
             exit_code = 1
 
     if "lint" in action:
@@ -779,6 +780,7 @@ def ruff(context, action=None, target=None, fix=False, output_format="concise"):
         command += f"--output-format {output_format} "
         command += " ".join(target)
         if not run_command(context, command, warn=True):
+            print("Ruff found issues with the code.")
             exit_code = 1
 
     if exit_code != 0:

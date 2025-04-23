@@ -10,8 +10,9 @@ class ParentSambandSerializer(NautobotModelSerializer):
 
     class Meta:
         """Meta attributes."""
+
         model = models.Samband
-        fields = ['id', 'name', 'sambandsnummer']
+        fields = ["id", "name", "sambandsnummer"]
 
 
 class SambandSerializer(NautobotModelSerializer, TaggedModelSerializerMixin):  # pylint: disable=too-many-ancestors
