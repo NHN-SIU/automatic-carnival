@@ -77,6 +77,12 @@ To clean up and start fresh:
 invoke destroy  
 invoke build  
 invoke start  
+``` 
+
+### 2.7 Testing
+To invoke the tests in 'praksis_nhn_nautobot/tests/' run this command:
+```bash
+invoke test
 ```
 
 ## Features
