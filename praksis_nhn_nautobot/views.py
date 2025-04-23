@@ -193,15 +193,15 @@ class SambandUIViewSet(NautobotUIViewSet):
     )
     
     def get_queryset(self):
-    queryset = super().get_queryset()
-    if self.request.GET:
-        # Generate a cache key from the current filters
-        cache_key = f"samband_filtered_{urlencode(sorted(self.request.GET.items()))}"
-        # Store the queryset IDs in cache (can't pickle querysets directly)
-        object_ids = list(queryset.values_list('id', flat=True))
-        cache.set(cache_key, object_ids, 300)  # Cache for 5 minutes
+        queryset = super().get_queryset()
+        if self.request.GET:
+            # Generate a cache key from the current filters
+            cache_key = f"samband_filtered_{urlencode(sorted(self.request.GET.items()))}"
+            # Store the queryset IDs in cache (can't pickle querysets directly)
+            object_ids = list(queryset.values_list('id', flat=True))
+            cache.set(cache_key, object_ids, 300)  # Cache for 5 minutes
 
-    return queryset
+        return queryset
 
 
 
