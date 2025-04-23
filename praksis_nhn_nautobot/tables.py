@@ -71,12 +71,39 @@ class SambandTable(BaseTable):
         orderable=True,
     )
 
-    location = tables.Column()
+    location = tables.TemplateColumn(
+        template_code="""
+            <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?location={{ record.location|urlencode }}" title="View all connections in {{ record.location }}">
+                {{ record.location }}
+            </a>
+        """,
+        orderable=True,
+        verbose_name="Location"
+    )
+    
     type = tables.Column()
-    location_type = tables.Column()
-    vendor = tables.Column()
+
+    location_type = tables.TemplateColumn(
+        template_code="""
+            <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?location_type={{ record.location_type|urlencode }}" title="View all {{ record.location_type }} locations">
+                {{ record.location_type }}
+            </a>
+        """,
+        orderable=True,
+        verbose_name="Location Type"
+    )
+    # vendor = tables.Column()
+    vendor = tables.TemplateColumn(
+        template_code="""
+            <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?vendors={{ record.vendor|urlencode }}" title="View all connections for: {{ record.vendor }}">
+                {{ record.vendor }}
+            </a>
+        """,
+        orderable=True,
+        verbose_name="Vendor"
+    )
     transporttype = tables.Column()
-    parents = TemplateColumn(
+    parents = tables.TemplateColumn(
         template_code="""
             {% for parent in record.parents.all %}
                 <a href="{{ parent.get_absolute_url }}">{{ parent.name }}</a>{% if not forloop.last %}, {% endif %}
@@ -85,7 +112,7 @@ class SambandTable(BaseTable):
             {% endfor %}
         """,
         orderable=True,
-        verbose_name="Parent",
+        verbose_name="Parent Circuit",
     )
 
     graph = tables.TemplateColumn(
@@ -109,6 +136,15 @@ class SambandTable(BaseTable):
         verbose_name="Map"
     )
 
+    
+    actions = ButtonsColumn(
+        models.Samband,
+        # Option for modifying the default action buttons on each row:
+        buttons=("changelog", "edit", "delete"),
+        # Option for modifying the pk for the action buttons:
+        pk_field="pk",
+    )
+
 
     class Meta(BaseTable.Meta):
         """Meta attributes."""
@@ -125,5 +161,7 @@ class SambandTable(BaseTable):
             "parents",
             "map",
             "graph",
+            "actions",
+
         )
 
