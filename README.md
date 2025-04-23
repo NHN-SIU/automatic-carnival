@@ -1,66 +1,92 @@
-# Praksis NHN Nautobot
+# Documentation – Intern Project from UiT, Spring 2025
 
-<!--
-Developer Note - Remove Me!
+## 1. Overview
 
-The README will have certain links/images broken until the PR is merged into `develop`. Update the GitHub links with whichever branch you're using (main etc.) if different.
+(table of content)?
 
-The logo of the project is a placeholder (docs/images/icon-praksis-nhn-nautobot.png) - please replace it with your app icon, making sure it's at least 200x200px and has a transparent background!
 
-To avoid extra work and temporary links, make sure that publishing docs (or merging a PR) is done at the same time as setting up the docs site on RTD, then test everything.
--->
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/NHN-SIU/nautobot-plugin-praksis/develop/docs/images/icon-praksis-nhn-nautobot.png" class="logo" height="200px">
-  <br>
-  <a href="https://github.com/NHN-SIU/automatic-carnival/actions"><img src="https://github.com/NHN-SIU/automatic-carnival/actions/workflows/ci.yml/badge.svg?branch=main"></a>
-  <a href="https://docs.nautobot.com/projects/praksis-nhn-nautobot/en/latest/"><img src="https://readthedocs.org/projects/nautobot-app-praksis-nhn-nautobot/badge/"></a>
-  <a href="https://pypi.org/project/praksis-nhn-nautobot/"><img src="https://img.shields.io/pypi/v/praksis-nhn-nautobot"></a>
-  <a href="https://pypi.org/project/praksis-nhn-nautobot/"><img src="https://img.shields.io/pypi/dm/praksis-nhn-nautobot"></a>
-  <br>
-  An <a href="https://networktocode.com/nautobot-apps/">App</a> for <a href="https://nautobot.com/">Nautobot</a>.
-</p>
+## 2. Getting started
 
-## Overview
+> This setup is inspired by [nautobot-docker-compose](https://github.com/nautobot/nautobot-docker-compose).
 
-> Developer Note: Add a long (2-3 paragraphs) description of what the App does, what problems it solves, what functionality it adds to Nautobot, what external systems it works with etc.
+### 2.1 Prerequisites
+Ensure you have the following installed on your local machine:
+#### 2.1.1 Docker  
+Install [Docker](https://docs.docker.com/get-docker/) and verify that it is running on your system.
 
-### Screenshots
+#### 2.1.2 Poetry  
+We recommend installing Poetry using one of the official methods:  
+👉 [Poetry Installation Guide](https://python-poetry.org/docs/#installing-with-pipx)
 
-> Developer Note: Add any representative screenshots of the App in action. These images should also be added to the `docs/user/app_use_cases.md` section.
+---
 
-> Developer Note: Place the files in the `docs/images/` folder and link them using only full URLs from GitHub, for example: `![Overview](https://raw.githubusercontent.com/NHN-SIU/nautobot-plugin-praksis/develop/docs/images/app-overview.png)`. This absolute static linking is required to ensure the README renders properly in GitHub, the docs site, and any other external sites like PyPI.
+### 2.2 Clone the repository
+Clone the repository and navigate into the project directory:
 
-More screenshots can be found in the [Using the App](https://docs.nautobot.com/projects/praksis-nhn-nautobot/en/latest/user/app_use_cases/) page in the documentation. Here's a quick overview of some of the app's added functionality:
+```bash
+git clone https://github.com/NHN-SIU/automatic-carnival.git
+cd automatic-carnival
+```
 
-![](https://raw.githubusercontent.com/NHN-SIU/nautobot-plugin-praksis/develop/docs/images/placeholder.png)
+### 2.3 Change creds.env, development.env 
+The application reads settings from creds.env and development.env.
 
-## Try it out!
+- development.env already exists.
+- Copy the example credentials file and customize it if needed:
+```bash
+cp development/creds.example.env development/creds.env
+```
 
-> Developer Note: Only keep this section if appropriate. Update link to correct sandbox.
+### 2.4 Activate Environment and Install Dependencies
+Set up the virtual environment and install all dependencies:
 
-This App is installed in the Nautobot Community Sandbox found over at [demo.nautobot.com](https://demo.nautobot.com/)!
+```bash
+poetry shell
+poetry lock
+poetry install
+```
 
-> For a full list of all the available always-on sandbox environments, head over to the main page on [networktocode.com](https://www.networktocode.com/nautobot/sandbox-environments/).
+> The 'poetry install' command will set up the necessary Python packages, including the invoke CLI tool used to manage this Nautobot project.
 
-## Documentation
 
-Full documentation for this App can be found over on the [Nautobot Docs](https://docs.nautobot.com) website:
 
-- [User Guide](https://docs.nautobot.com/projects/praksis-nhn-nautobot/en/latest/user/app_overview/) - Overview, Using the App, Getting Started.
-- [Administrator Guide](https://docs.nautobot.com/projects/praksis-nhn-nautobot/en/latest/admin/install/) - How to Install, Configure, Upgrade, or Uninstall the App.
-- [Developer Guide](https://docs.nautobot.com/projects/praksis-nhn-nautobot/en/latest/dev/contributing/) - Extending the App, Code Reference, Contribution Guide.
-- [Release Notes / Changelog](https://docs.nautobot.com/projects/praksis-nhn-nautobot/en/latest/admin/release_notes/).
-- [Frequently Asked Questions](https://docs.nautobot.com/projects/praksis-nhn-nautobot/en/latest/user/faq/).
+### 2.5 Build and Start the Application
 
-### Contributing to the Documentation
+Build and start the application using the following commands:
+```bash
+invoke build  
+invoke start  
+```
+⚠️ It may take some time for the application to start up.
 
-You can find all the Markdown source for the App documentation under the [`docs`](https://github.com/NHN-SIU/automatic-carnival/tree/develop/docs) folder in this repository. For simple edits, a Markdown capable editor is sufficient: clone the repository and edit away.
+Once running, you can log inn with 
+- **username**: 'admin' 
+- **password**: 'admin'
 
-If you need to view the fully-generated documentation site, you can build it with [MkDocs](https://www.mkdocs.org/). A container hosting the documentation can be started using the `invoke` commands (details in the [Development Environment Guide](https://docs.nautobot.com/projects/praksis-nhn-nautobot/en/latest/dev/dev_environment/#docker-development-environment)) on [http://localhost:8001](http://localhost:8001). Using this container, as your changes to the documentation are saved, they will be automatically rebuilt and any pages currently being viewed will be reloaded in your browser.
+To populate the app with test data from the test_data/ directory:
+Populate the app with test data in the test_data diectory:
+```bash
+python3 import_data.py
+```
 
-Any PRs with fixes or improvements are very welcome!
 
-## Questions
+### 2.6 Clean up everything and start from scratch
+To clean up and start fresh:
+```bash
+invoke destroy  
+invoke build  
+invoke start  
+```
 
-For any questions or comments, please check the [FAQ](https://docs.nautobot.com/projects/praksis-nhn-nautobot/en/latest/user/faq/) first. Feel free to also swing by the [Network to Code Slack](https://networktocode.slack.com/) (channel `#nautobot`), sign up [here](http://slack.networktocode.com/) if you don't have an account.
+## Features
+
+### List feature
+
+### Map Feature
+
+### Graph feature
+
+##  Known Issues / Limitations
+
+## Future Work / TODO
