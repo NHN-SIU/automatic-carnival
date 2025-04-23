@@ -258,3 +258,49 @@
   .connection-row td {
     font-size: 13px;
   }
+
+  /* Map legend enhancements */
+.map-legend {
+  transition: all 0.3s ease;
+  max-height: 400px;
+  overflow: hidden;
+}
+
+.legend-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: bold;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 5px;
+}
+
+.map-legend.collapsed {
+  max-height: 35px;
+  overflow: hidden;
+}
+
+.map-legend.collapsed .legend-header {
+  margin-bottom: 0;
+  border-bottom: none;
+}
+
+.map-legend.collapsed #toggle-legend i {
+  transform: rotate(180deg);
+}
+
+#toggle-legend {
+  padding: 0 5px;
+  background: transparent;
+  border: none;
+  color: #666;
+}
+
+#toggle-legend:hover {
+  color: #333;
+}
+
+#toggle-legend i {
+  transition: transform 0.3s ease;
+}

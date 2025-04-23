@@ -62,6 +62,26 @@ document.addEventListener('DOMContentLoaded', function() {
     // Load initial data
     loadMapData(getURLParameters());
     
+    // Set up legend toggle functionality
+    document.getElementById('toggle-legend').addEventListener('click', function() {
+      const legend = document.querySelector('.map-legend');
+      legend.classList.toggle('collapsed');
+      
+      // Store preference in localStorage
+      localStorage.setItem('map_legend_collapsed', legend.classList.contains('collapsed'));
+    });
+    
+    // Check if legend was collapsed in previous session
+    function initLegendState() {
+      const wasCollapsed = localStorage.getItem('map_legend_collapsed');
+      if (wasCollapsed === 'true') {
+        document.querySelector('.map-legend').classList.add('collapsed');
+      }
+    }
+    
+    // Call this at the end of your initialization
+    // initLegendState();
+    
     /**
      * Initialize the map and layers
      */
@@ -85,28 +105,29 @@ document.addEventListener('DOMContentLoaded', function() {
       radiusLayer = L.layerGroup().addTo(map);
       
       // Populate location type legend
-      populateLocationTypeLegend();
+      // populateLocationTypeLegend();
+      initLegendState();
     }
     
     /**
      * Populate legend with location type icons
      */
-    function populateLocationTypeLegend() {
-      const locationTypeLegend = document.getElementById('location-type-legend');
-      for (const [type, config] of Object.entries(locationTypeIcons)) {
-        const item = document.createElement('div');
-        item.className = 'legend-item';
+    // function populateLocationTypeLegend() {
+    //   const locationTypeLegend = document.getElementById('location-type-legend');
+    //   for (const [type, config] of Object.entries(locationTypeIcons)) {
+    //     const item = document.createElement('div');
+    //     item.className = 'legend-item';
         
-        item.innerHTML = `
-          <div style="width: 16px; margin-right: 5px; text-align: center;">
-            <i class="${config.icon}" style="color: ${config.color}; font-size: 12px;"></i>
-          </div>
-          <span>${type}</span>
-        `;
+    //     item.innerHTML = `
+    //       <div style="width: 16px; margin-right: 5px; text-align: center;">
+    //         <i class="${config.icon}" style="color: ${config.color}; font-size: 12px;"></i>
+    //       </div>
+    //       <span>${type}</span>
+    //     `;
         
-        locationTypeLegend.appendChild(item);
-      }
-    }
+    //     locationTypeLegend.appendChild(item);
+    //   }
+    // }
     
     /**
      * Create a custom icon for a location type
