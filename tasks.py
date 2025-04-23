@@ -865,7 +865,7 @@ def tests(context, failfast=False, keepdb=False, lint_only=False):
         start(context)
     # Sorted loosely from fastest to slowest
     print("Running ruff...")
-    ruff(context)
+    ruff(context, fix=True)
     print("Running yamllint...")
     yamllint(context)
     print("Running poetry check...")

@@ -72,18 +72,37 @@ class SambandTable(BaseTable):
 
     location = tables.TemplateColumn(
         template_code="""
-            <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?location={{ record.location|urlencode }}" title="View connections in {{ record.location }}">
+            <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?location={{ record.location|urlencode }}" title="View all connections in {{ record.location }}">
                 {{ record.location }}
             </a>
         """,
         orderable=True,
         verbose_name="Location",
     )
+
     type = tables.Column()
-    location_type = tables.Column(verbose_name="Lokasjon type")
-    vendor = tables.Column()
-    transporttype = tables.Column(verbose_name="Transport type")
-    parents = TemplateColumn(
+
+    location_type = tables.TemplateColumn(
+        template_code="""
+            <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?location_type={{ record.location_type|urlencode }}" title="View all {{ record.location_type }} locations">
+                {{ record.location_type }}
+            </a>
+        """,
+        orderable=True,
+        verbose_name="Location Type",
+    )
+    # vendor = tables.Column()
+    vendor = tables.TemplateColumn(
+        template_code="""
+            <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?vendors={{ record.vendor|urlencode }}" title="View all connections for: {{ record.vendor }}">
+                {{ record.vendor }}
+            </a>
+        """,
+        orderable=True,
+        verbose_name="Vendor",
+    )
+    transporttype = tables.Column()
+    parents = tables.TemplateColumn(
         template_code="""
             {% for parent in record.parents.all %}
                 <a href="{{ parent.get_absolute_url }}">{{ parent.name }}</a>{% if not forloop.last %}, {% endif %}
@@ -97,7 +116,7 @@ class SambandTable(BaseTable):
 
     graph = tables.TemplateColumn(
         template_code="""
-        <a href="{% url 'plugins:praksis_nhn_nautobot:samband_graph' record.pk %}" class="btn btn-sm btn-primary" title="View Graph">
+        <a href="{% url 'plugins:praksis_nhn_nautobot:samband_graph_focus' record.pk %}" class="btn btn-sm btn-primary" title="View Graph">
             <i class="mdi mdi-graph"></i>
         </a>
         """,
