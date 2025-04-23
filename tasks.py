@@ -782,8 +782,7 @@ def ruff(context, action=None, target=None, fix=False, output_format="concise"):
             exit_code = 1
 
     if exit_code != 0:
-        print("⚠️ Ruff found issues.")
-        # raise Exit(code=exit_code)
+        raise Exit(code=exit_code)
 
 
 @task
@@ -863,20 +862,20 @@ def tests(context, failfast=False, keepdb=False, lint_only=False):
         print("Starting Docker Containers...")
         start(context)
     # Sorted loosely from fastest to slowest
-    #print("Running ruff...")
-    #ruff(context)
-    #print("Running yamllint...")
-    #yamllint(context)
-    #print("Running poetry check...")
-    #lock(context, check=True)
-    #print("Running migrations check...")
-    #check_migrations(context)
-    #print("Running pylint...")
-    #pylint(context)
-    #print("Running mkdocs...")
-    #build_and_check_docs(context)
-    #print("Checking app config schema...")
-    #validate_app_config(context)
+    print("Running ruff...")
+    ruff(context)
+    print("Running yamllint...")
+    yamllint(context)
+    print("Running poetry check...")
+    lock(context, check=True)
+    print("Running migrations check...")
+    check_migrations(context)
+    print("Running pylint...")
+    pylint(context)
+    print("Running mkdocs...")
+    build_and_check_docs(context)
+    print("Checking app config schema...")
+    validate_app_config(context)
     if not lint_only:
         print("Running unit tests...")
         unittest(context, failfast=failfast, keepdb=keepdb)
