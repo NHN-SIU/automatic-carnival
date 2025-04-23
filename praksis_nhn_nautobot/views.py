@@ -17,9 +17,11 @@ from praksis_nhn_nautobot.services.graph_service import SambandGraphService
 
 from praksis_nhn_nautobot import filters, forms, models, tables
 from praksis_nhn_nautobot.api import serializers
-from math import radians, cos, sin, asin, sqrt
+from praksis_nhn_nautobot.services.graph_service import SambandGraphService
 
+from math import radians, cos, sin, asin, sqrt
 from .models import Samband
+
 
 
 class SambandUIViewSet(NautobotUIViewSet):

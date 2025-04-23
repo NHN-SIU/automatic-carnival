@@ -108,14 +108,6 @@ class SambandTable(BaseTable):
         orderable=False,
         verbose_name="Map"
     )
-    
-    actions = ButtonsColumn(
-        models.Samband,
-        # Option for modifying the default action buttons on each row:
-        buttons=("changelog", "edit", "delete"),
-        # Option for modifying the pk for the action buttons:
-        pk_field="pk",
-    )
 
 
     class Meta(BaseTable.Meta):
@@ -131,8 +123,7 @@ class SambandTable(BaseTable):
             "vendor",
             "transporttype",
             "parents",
-            # "map",
-            # "graph",
             "map",
-            "actions",
+            "graph",
         )
+
