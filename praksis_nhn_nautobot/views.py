@@ -8,13 +8,8 @@ from django.http import JsonResponse
 from django.core.cache import cache
 from django.utils.http import urlencode
 
-from django.shortcuts import get_object_or_404
-from . import graph_utils # Import the new utility module
-
 from praksis_nhn_nautobot.api.serializers import SambandSerializer
-
 from praksis_nhn_nautobot.services.graph_service import SambandGraphService
-
 from praksis_nhn_nautobot import filters, forms, models, tables
 from praksis_nhn_nautobot.api import serializers
 from praksis_nhn_nautobot.services.graph_service import SambandGraphService
