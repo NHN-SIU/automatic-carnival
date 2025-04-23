@@ -16,7 +16,7 @@
 #         models.Samband,
 #         # Option for modifying the default action buttons on each row:
 #         buttons=("changelog", "edit", "delete"),
-        
+
 #         # Option for modifying the pk for the action buttons:
 #         pk_field="pk",
 #     )
@@ -41,7 +41,6 @@
 
 import django_tables2 as tables
 from django_tables2.columns import TemplateColumn
-from django.urls import reverse
 from nautobot.apps.tables import BaseTable, ButtonsColumn, ToggleColumn
 
 from praksis_nhn_nautobot import models
@@ -105,7 +104,7 @@ class SambandTable(BaseTable):
         orderable=False,
         verbose_name="Graph"
     )
-    
+
     # Add a custom map button column
     map = tables.TemplateColumn(
         template_code="""
@@ -116,8 +115,8 @@ class SambandTable(BaseTable):
         orderable=False,
         verbose_name="Map"
     )
-    
-    
+
+
     actions = ButtonsColumn(
         models.Samband,
         # Option for modifying the default action buttons on each row:

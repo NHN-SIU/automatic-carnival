@@ -1,10 +1,11 @@
 """Filtering for praksis_nhn_nautobot."""
 
 import django_filters
+from django.db.models import Q
 from nautobot.apps.filters import NautobotFilterSet
 
 from praksis_nhn_nautobot.models import Samband
-from django.db.models import Q
+
 
 # pylint: disable=nb-use-fields-all
 class SambandFilterSet(NautobotFilterSet):  # pylint: disable=too-many-ancestors
@@ -64,6 +65,10 @@ class SambandFilterSet(NautobotFilterSet):  # pylint: disable=too-many-ancestors
         # Can also use fields = "__all___" in combination with exclude = [] to exclude specific fields
 
     def filter_q(self, queryset, name, value):
+        """Filter for search bar.
+
+        This filter allows searching across multiple fields in the model.
+        """
         return queryset.filter(
             Q(name__icontains=value) |
             Q(location__icontains=value) |

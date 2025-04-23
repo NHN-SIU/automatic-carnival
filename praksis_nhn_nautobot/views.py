@@ -1,16 +1,16 @@
 """Views for praksis_nhn_nautobot."""
 
-from nautobot.apps.views import NautobotUIViewSet
-from nautobot.apps.ui import SectionChoices, ObjectFieldsPanel, ObjectDetailContent, Button, DropdownButton
-from nautobot.core.views import generic
-from nautobot.core.choices import ButtonColorChoices
-from django.views.generic import DetailView, View, TemplateView
-from django.shortcuts import render
+from math import asin, cos, radians, sin, sqrt
+
 from django.http import JsonResponse
+from django.views.generic import TemplateView, View
+from nautobot.apps.ui import Button, DropdownButton, ObjectDetailContent, ObjectFieldsPanel, SectionChoices
+from nautobot.apps.views import NautobotUIViewSet
+from nautobot.core.choices import ButtonColorChoices
+from nautobot.core.views import generic
 
 from praksis_nhn_nautobot import filters, forms, models, tables
 from praksis_nhn_nautobot.api import serializers
-from math import radians, cos, sin, asin, sqrt
 
 from .models import Samband
 
@@ -189,43 +189,43 @@ class SambandUIViewSet(NautobotUIViewSet):
 
 class SambandGraphView(generic.ObjectView):
     """Graph visualization for Samband."""
-    
+
     queryset = models.Samband.objects.all()
     template_name = "praksis_nhn_nautobot/graph_view.html"
-    
+
     def get_extra_context(self, request, instance):
         """Add graph data to the template context."""
         context = super().get_extra_context(request, instance)
-        
+
         # Get requested depth from query parameters (default: 2)
         depth = int(request.GET.get('depth', 2))
-        
+
         # Get view mode from query parameters (default: hierarchy)
         mode = request.GET.get('mode', 'hierarchy')
-        
+
         # Build the complete hierarchy data
         parent_tree = self._get_relation_tree(instance, 'parents', max_depth=depth)
         child_tree = self._get_relation_tree(instance, 'children', max_depth=depth)
-        
+
         # Prepare the graph data based on mode
         if mode == 'parents':
             # Only direct parent relationships
             graph_data = self._prepare_graph_data(
-                instance, 
-                self._flatten_tree(parent_tree), 
+                instance,
+                self._flatten_tree(parent_tree),
                 []
             )
         elif mode == 'children':
             # Only direct child relationships
             graph_data = self._prepare_graph_data(
-                instance, 
-                [], 
+                instance,
+                [],
                 self._flatten_tree(child_tree)
             )
         else:
             # Complete hierarchy
             graph_data = self._prepare_graph_data(instance, parent_tree, child_tree)
-        
+
         # Add data and options to context
         context.update({
             'graph_data': graph_data,
@@ -239,21 +239,19 @@ class SambandGraphView(generic.ObjectView):
             }
         })
         return context
-    
+
     def _get_relation_tree(self, obj, relation_type='parents', current_depth=0, max_depth=3, processed=None):
-        """
-        Recursively build relation tree (parents or children).
-        """
+        """Recursively build relation tree (parents or children)."""
         if processed is None:
             processed = set()
-            
+
         if current_depth >= max_depth or obj.id in processed:
             return None
-            
+
         processed.add(obj.id)
-        
+
         relations_data = []
-        
+
         # Get the correct relation based on type
         if relation_type == 'parents':
             relations = obj.parents.all()
@@ -261,7 +259,7 @@ class SambandGraphView(generic.ObjectView):
         else:  # relation_type == 'children'
             relations = obj.children.all()
             next_relation_key = 'children'
-        
+
         for relation in relations:
             relation_data = {
                 'id': str(relation.id),
@@ -273,28 +271,28 @@ class SambandGraphView(generic.ObjectView):
                 )
             }
             relations_data.append(relation_data)
-            
+
         return relations_data if relations_data else None
-    
+
     def _flatten_tree(self, tree):
         """Convert a nested tree to a flat list of direct relationships."""
         if not tree:
             return []
-        
+
         # Return only top-level relations (no nesting)
-        return [{k: v for k, v in item.items() if k != 'parents' and k != 'children'} 
+        return [{k: v for k, v in item.items() if k != 'parents' and k != 'children'}
                 for item in tree]
-    
+
     def _prepare_graph_data(self, current_node, parent_tree, child_tree):
         """
         Prepare graph data structure for D3 visualization.
-        
+
         Returns:
             dict: Contains 'nodes' and 'links' arrays for D3
         """
         nodes = []
         links = []
-        
+
         # Add current node
         current_id = str(current_node.id)
         nodes.append({
@@ -303,24 +301,24 @@ class SambandGraphView(generic.ObjectView):
             'sambandsnummer': current_node.sambandsnummer,
             'type': 'current'
         })
-        
+
         # Process parent tree
         if parent_tree:
             self._process_relation_tree(parent_tree, nodes, links, current_id, True)
-        
+
         # Process child tree
         if child_tree:
             self._process_relation_tree(child_tree, nodes, links, current_id, False)
-        
+
         return {
             'nodes': nodes,
             'links': links
         }
-    
+
     def _process_relation_tree(self, tree, nodes, links, connected_id, is_parent, current_depth=0):
         """
         Process a relation tree and add nodes and links.
-        
+
         Args:
             tree: List of relation objects (can be nested)
             nodes: List to add nodes to
@@ -331,14 +329,14 @@ class SambandGraphView(generic.ObjectView):
         """
         if not tree:
             return
-        
+
         for relation in tree:
             # Skip if relation has no ID
             if 'id' not in relation:
                 continue
-                
+
             relation_id = relation['id']
-            
+
             # Add node if it doesn't exist
             if not any(n['id'] == relation_id for n in nodes):
                 nodes.append({
@@ -348,23 +346,23 @@ class SambandGraphView(generic.ObjectView):
                     'depth': relation.get('depth', current_depth),
                     'type': 'parent' if is_parent else 'child'
                 })
-            
+
             # Add link
             links.append({
                 'source': relation_id if is_parent else connected_id,
                 'target': connected_id if is_parent else relation_id,
                 'type': 'parent-child'
             })
-            
+
             # Process nested relations if they exist
             next_relations_key = 'parents' if is_parent else 'children'
             if next_relations_key in relation and relation[next_relations_key]:
                 self._process_relation_tree(
-                    relation[next_relations_key], 
-                    nodes, 
-                    links, 
-                    relation_id, 
-                    is_parent, 
+                    relation[next_relations_key],
+                    nodes,
+                    links,
+                    relation_id,
+                    is_parent,
                     current_depth + 1
                 )
 
@@ -372,7 +370,7 @@ def parse_geo_coordinates(geo_string):
     """Parse geographic coordinates in various formats."""
     if not geo_string:
         return None, None
-        
+
     try:
         # Handle format: "60.3927° N, 5.3245° E"
         if '°' in geo_string:
@@ -380,30 +378,30 @@ def parse_geo_coordinates(geo_string):
             parts = geo_string.split(',')
             if len(parts) < 2:
                 return None, None
-                
+
             # Parse latitude
             lat_part = parts[0].strip()
             lat_value = float(lat_part.split('°')[0].strip())
             if 'S' in lat_part:
                 lat_value = -lat_value  # Southern hemisphere is negative
-                
+
             # Parse longitude
             lng_part = parts[1].strip()
             lng_value = float(lng_part.split('°')[0].strip())
             if 'W' in lng_part:
                 lng_value = -lng_value  # Western hemisphere is negative
-                
+
             return lat_value, lng_value
-            
+
         # Handle simple "lat, lng" format
         else:
             parts = geo_string.split(',')
             if len(parts) >= 2:
                 return float(parts[0].strip()), float(parts[1].strip())
-                
+
     except (ValueError, IndexError) as e:
         print(f"Error parsing geo_string '{geo_string}': {e}")
-        
+
     return None, None
 
 
@@ -411,7 +409,7 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     """Calculate the distance between two points using Haversine formula."""
     # Convert decimal degrees to radians
     lat1, lon1, lat2, lon2 = map(radians, [lat1, lon1, lat2, lon2])
-    
+
     # Haversine formula
     dlon = lon2 - lon1
     dlat = lat2 - lat1
@@ -422,35 +420,36 @@ def calculate_distance(lat1, lon1, lat2, lon2):
 
 class SambandMapDataAPIView(View):
     """API view that returns sambands data as JSON for client-side rendering."""
-    
+
     def get(self, request):
+        """Handle GET requests to return sambands data."""
         # Get filter parameters from request
         lat = request.GET.get('lat')
         lng = request.GET.get('lng')
         radius = request.GET.get('radius')
-        
+
         # Handle connection detail request
         connection_id = request.GET.get('connection_id')
         if connection_id:
             try:
                 samband = Samband.objects.get(pk=connection_id)
-                
+
                 # Parse coordinates
                 point_a_coords = None
                 if samband.pop_a_geo_string:
                     a_lat, a_lng = parse_geo_coordinates(samband.pop_a_geo_string)
                     if a_lat is not None and a_lng is not None:
                         point_a_coords = [a_lat, a_lng]
-                
+
                 point_b_coords = None
                 if samband.pop_b_geo_string:
                     b_lat, b_lng = parse_geo_coordinates(samband.pop_b_geo_string)
                     if b_lat is not None and b_lng is not None:
                         point_b_coords = [b_lat, b_lng]
-                
+
                 # Create map features for this connection
                 features = []
-                
+
                 # Add point features if coordinates are valid
                 if point_a_coords:
                     features.append({
@@ -462,18 +461,18 @@ class SambandMapDataAPIView(View):
                         'category': samband.pop_a_category,
                         'room': samband.pop_a_room
                     })
-                
+
                 if point_b_coords:
                     features.append({
                         'type': 'point',
                         'point_type': 'B',
                         'name': samband.name,
                         'location': point_b_coords,
-                        'address': samband.pop_b_address_string, 
+                        'address': samband.pop_b_address_string,
                         'category': samband.pop_b_category,
                         'room': samband.pop_b_room
                     })
-                
+
                 # Add connection line if both points are valid
                 if point_a_coords and point_b_coords:
                     features.append({
@@ -481,7 +480,7 @@ class SambandMapDataAPIView(View):
                         'name': samband.name,
                         'points': [point_a_coords, point_b_coords]
                     })
-                
+
                 # Return detailed connection information with map features
                 return JsonResponse({
                     'name': samband.name,
@@ -503,46 +502,46 @@ class SambandMapDataAPIView(View):
                 })
             except Samband.DoesNotExist:
                 return JsonResponse({'error': 'Connection not found'}, status=404)
-        
+
         # Handle multiple filter selections (keep existing filter code)
         vendors = request.GET.getlist('vendor')
         statuses = request.GET.getlist('status')
         citylist = request.GET.getlist('location')
         location_types = request.GET.getlist('location_type')
         transport_types = request.GET.getlist('transporttype')
-        
+
         # Start with all sambands
         sambands = Samband.objects.all()
-        
+
         # Apply vendor and status filters (keep existing filter code)
         if vendors:
             sambands = sambands.filter(vendor__in=vendors)
-            
+
         if statuses:
             sambands = sambands.filter(status__in=statuses)
-        
+
         if citylist:
             sambands = sambands.filter(location__in=citylist)
-        
+
         if location_types:
             sambands = sambands.filter(location_type__in=location_types)
 
         if transport_types:
             sambands = sambands.filter(transporttype__in=transport_types)
-        
+
         # Process distance filtering (keep existing distance calculation code)
         if lat and lng and radius:
             try:
                 center_lat = float(lat)
                 center_lng = float(lng)
                 radius_km = float(radius)
-                
+
                 # Filter by distance
                 filtered_by_distance = []
-                
+
                 for samband in sambands:
                     points_in_radius = False
-                    
+
                     # Check point A
                     if samband.pop_a_geo_string:
                         a_lat, a_lng = parse_geo_coordinates(samband.pop_a_geo_string)
@@ -550,7 +549,7 @@ class SambandMapDataAPIView(View):
                             distance = calculate_distance(center_lat, center_lng, a_lat, a_lng)
                             if distance <= radius_km:
                                 points_in_radius = True
-                    
+
                     # Check point B
                     if not points_in_radius and samband.pop_b_geo_string:
                         b_lat, b_lng = parse_geo_coordinates(samband.pop_b_geo_string)
@@ -558,21 +557,21 @@ class SambandMapDataAPIView(View):
                             distance = calculate_distance(center_lat, center_lng, b_lat, b_lng)
                             if distance <= radius_km:
                                 points_in_radius = True
-                    
+
                     if points_in_radius:
                         filtered_by_distance.append(samband)
-                
+
                 sambands = filtered_by_distance
-                
+
             except (ValueError, TypeError) as e:
                 # Log the error for debugging
                 print(f"Error processing geo filter: {e}")
-        
+
 
         include_fields = request.GET.getlist('include_fields', [])
-        
+
         connections = []
-        
+
         # Process each samband for the new format
         for samband in sambands:
             # Extract coordinates for both points
@@ -581,13 +580,13 @@ class SambandMapDataAPIView(View):
                 a_lat, a_lng = parse_geo_coordinates(samband.pop_a_geo_string)
                 if a_lat is not None and a_lng is not None:
                     point_a_coords = [a_lat, a_lng]
-            
+
             point_b_coords = None
             if samband.pop_b_geo_string:
                 b_lat, b_lng = parse_geo_coordinates(samband.pop_b_geo_string)
                 if b_lat is not None and b_lng is not None:
                     point_b_coords = [b_lat, b_lng]
-            
+
             # Only include the connection if both points have valid coordinates
             if point_a_coords and point_b_coords:
                 # Create the basic connection object with minimal data
@@ -607,7 +606,7 @@ class SambandMapDataAPIView(View):
                         # Remove address and room fields to reduce payload size
                     }
                 }
-                
+
                 # Add any additional requested fields
                 for field in include_fields:
                     if field == 'status' and samband.status:
@@ -626,31 +625,32 @@ class SambandMapDataAPIView(View):
                         connection['location_type'] = samband.location_type
                     elif field == 'transporttype' and samband.transporttype:
                         connection['transporttype'] = samband.transporttype
-                
+
                 connections.append(connection)
-        
+
         # Return the new compact format
         response_data = {
             'connections': connections,
             'count': len(connections),
             'filter_active': bool(vendors or statuses or citylist or location_types or transport_types or (lat and lng and radius))
         }
-        
+
         # Add a radius circle if filtering by location
         if lat and lng and radius:
             response_data['radius'] = {
                 'location': [float(lat), float(lng)],
                 'radius_km': float(radius)
             }
-        
+
         return JsonResponse(response_data)
 
 
 class SambandClientMapView(TemplateView):
     """View for displaying a map using client-side rendering."""
     template_name = "praksis_nhn_nautobot/samband_map_clientside.html"
-    
+
     def get_filter_options(self):
+        """Get unique filter options for the map."""
         # Get unique filter values
         vendors = Samband.objects.values_list('vendor', flat=True).distinct().order_by('vendor')
         statuses = Samband.objects.values_list('status', flat=True).distinct().order_by('status')
@@ -664,7 +664,7 @@ class SambandClientMapView(TemplateView):
         citylist = [c for c in citylist if c]
         location_types = [lt for lt in location_types if lt]
         transport_types = [tt for tt in transport_types if tt]
-        
+
         return {
             'vendors': vendors,
             'statuses': statuses,
@@ -672,26 +672,27 @@ class SambandClientMapView(TemplateView):
             'location_types': location_types,
             'transport_types': transport_types
         }
-    
+
     def get_context_data(self, **kwargs):
+        """Add filter options and selected values to the context."""
         context = super().get_context_data(**kwargs)
-        
+
         # Get filter parameters from request
         lat = self.request.GET.get('lat')
         lng = self.request.GET.get('lng')
         radius = self.request.GET.get('radius')
-        
+
         # Handle multiple selections
         vendors = self.request.GET.getlist('vendor')
         statuses = self.request.GET.getlist('status')
         citylist = self.request.GET.getlist('location')
         location_types = self.request.GET.getlist('location_type')
         transport_types = self.request.GET.getlist('transporttype')
-        
+
         # Get filter options
         filter_options = self.get_filter_options()
         context.update(filter_options)
-        
+
         # Add selected values to context
         if vendors:
             context['selected_vendors'] = vendors
@@ -703,7 +704,7 @@ class SambandClientMapView(TemplateView):
             context['selected_location_types'] = location_types
         if transport_types:
             context['selected_transport_types'] = transport_types
-        
+
         # Add location parameters to context
         if lat:
             context['lat'] = lat
@@ -713,25 +714,26 @@ class SambandClientMapView(TemplateView):
             context['radius'] = radius
         else:
             context['radius'] = '100'
-        
+
         context['title'] = 'Network Connections Map'
-        
+
         return context
 
 class SambandMapView(TemplateView):
     """View for displaying a map of a single connection."""
     template_name = "praksis_nhn_nautobot/single_samband_view.html"
-    
+
     def get_context_data(self, **kwargs):
+        """Add connection ID and title to the context."""
         context = super().get_context_data(**kwargs)
-        
+
         # Get the connection ID from the URL
         pk = self.kwargs.get('pk')
-        
+
         # Add connection ID to the context - this is all you need for JavaScript to fetch data
         context['connection_id'] = pk
-        
+
         # Add a generic title (this will be updated via JavaScript)
         context['title'] = "Connection Map"
-        
+
         return context

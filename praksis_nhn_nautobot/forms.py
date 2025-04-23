@@ -156,6 +156,7 @@ class SambandFilterForm(NautobotFilterForm):
     )
 
     def __init__(self, *args, **kwargs):
+        """Initialize the form and set up choices for fields."""
         super().__init__(*args, **kwargs)
         # Fetch distinct location values from the Samband model
         locations = models.Samband.objects.values_list('location', flat=True)
@@ -170,4 +171,3 @@ class SambandFilterForm(NautobotFilterForm):
         self.fields['vendor'].choices = vendor_choices
         self.fields['transporttype'].choices = transporttype_choices
         self.fields['type'].choices = type_choices
-        
