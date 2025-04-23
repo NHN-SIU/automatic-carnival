@@ -203,8 +203,6 @@ class SambandUIViewSet(NautobotUIViewSet):
 
         return queryset
 
-
-
 class SambandGraphFocusView(generic.ObjectView):
     """Graph visualization for Samband."""
     
@@ -372,7 +370,6 @@ def parse_geo_coordinates(geo_string):
         print(f"Error parsing geo_string '{geo_string}': {e}")
         
     return None, None
-
 
 def calculate_distance(lat1, lon1, lat2, lon2):
     """Calculate the distance between two points using Haversine formula."""
@@ -576,7 +573,6 @@ class SambandMapDataAPIView(View):
             }
         
         return JsonResponse(response_data)
-
 
 class SambandClientMapView(TemplateView):
     """View for displaying a map using client-side rendering."""
