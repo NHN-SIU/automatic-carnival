@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="row">
+  <div class="col-md-12">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 class="panel-title" style="margin: 0;">Graph view for {{object}}</h3>
+          <div class="btn-group" role="group" aria-label="Depth Control">
+            <span class="btn btn-default disabled">Depth:</span>
+            {% for d in '123'|make_list %}
+              <a href="?depth={{ d }}" class="btn {% if depth == d|add:'0' %}btn-primary{% else %}btn-default{% endif %}">{{ d }}</a>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <!-- Label Configuration Toolbox -->
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <h4 class="panel-title">
+              <a data-toggle="collapse" href="#labelOptions" class="collapsed">
+                Label Options <span class="glyphicon glyphicon-menu-down"></span>
+              </a>
+            </h4>
+          </div>
+          <div id="labelOptions" class="panel-collapse collapse">
+            <div class="panel-body">
+              <form id="labelConfigForm">
+                <div class="row">
+                  <div class="col-md-3">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" value="sambandsnummer"> Sambandsnummer
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" value="bandwidth"> Bandwidth
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" value="status"> Status
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" value="type"> Type
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-md-3">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" value="vendor"> Vendor
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" value="location"> Location
+                      </label>
+                    </div>
+                  </div>
+                  <div class="col-md-3">
+                    <div class="checkbox">
+                      <label>
+                        <input type="checkbox" value="transporttype"> Transport Type
+                      </label>
+                    </div>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <div id="network-container" style="height: 600px; width: 100%;"></div>
+
+        <div class="text-center" style="margin-top: 20px;">
+          <a href="#" id="view-table-btn" class="btn btn-secondary" style="margin-right: 10px;">
+            <span class="glyphicon glyphicon-list"></span> View selection in table
+          </a>
+          <a href="#" id="view-map-btn" class="btn btn-secondary">
+            <span class="glyphicon glyphicon-map-marker"></span> View selection in map
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Include vis.js library -->
+<script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.2/dist/vis-network.min.js"></script>
+{{ True|json_script:"is-focus-view" }}
+{{ network_data.nodes|json_script:"nodes-data" }}
+{{ network_data.edges|json_script:"edges-data" }}
+{{ network_options|json_script:"options-data" }}
+{{ network_data.nodes|json_script:"full-nodes-data" }}
+<script src="{% static 'js/graph.js' %}"></script>
+<script type="text/javascript">
+  document.addEventListener('DOMContentLoaded', function() {
+    initNetworkGraph();
+  });
+</script>
+{% endblock %}
