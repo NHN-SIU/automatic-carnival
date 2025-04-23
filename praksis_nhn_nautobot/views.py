@@ -58,7 +58,7 @@ class SambandGraphFocusView(generic.ObjectView):
     """Graph visualization for Samband."""
     
     queryset = models.Samband.objects.all()
-    template_name = "praksis_nhn_nautobot/graph_view.html"
+    template_name = "praksis_nhn_nautobot/focus_graph.html"
     
     def get_extra_context(self, request, instance):
         """Add graph data to the template context."""
@@ -67,190 +67,55 @@ class SambandGraphFocusView(generic.ObjectView):
         # Get requested depth from query parameters (default: 2)
         depth = int(request.GET.get('depth', 2))
         
-        # Get view mode from query parameters (default: hierarchy)
-        mode = request.GET.get('mode', 'hierarchy')
+        hierarchy_data = SambandGraphService.get_relations(instance, depth)
+        serialized_data = SambandSerializer(hierarchy_data, many=True, context={'request': self.request}).data
+        graph_data = SambandGraphService.create_network_graph(serialized_data)
         
-        # Build the complete hierarchy data
-        parent_tree = self._get_relation_tree(instance, 'parents', max_depth=depth)
-        child_tree = self._get_relation_tree(instance, 'children', max_depth=depth)
-        
-        # Prepare the graph data based on mode
-        if mode == 'parents':
-            # Only direct parent relationships
-            graph_data = self._prepare_graph_data(
-                instance, 
-                self._flatten_tree(parent_tree), 
-                []
-            )
-        elif mode == 'children':
-            # Only direct child relationships
-            graph_data = self._prepare_graph_data(
-                instance, 
-                [], 
-                self._flatten_tree(child_tree)
-            )
-        else:
-            # Complete hierarchy
-            graph_data = self._prepare_graph_data(instance, parent_tree, child_tree)
-        
-        # Add data and options to context
-        context.update({
-            'graph_data': graph_data,
-            'current_depth': depth,
-            'current_mode': mode,
-            'depth_options': [1, 2, 3],
-            'samband_json': {
-                'id': str(instance.pk),
-                'name': str(instance),
-                'sambandsnummer': instance.sambandsnummer
+        # Visualization options for focal view (hierarchical layout)
+        options = {
+            "nodes": {
+                "shape": "dot",
+                "size": 20,
+                "font": {
+                    "size": 14,
+                    "face": "Tahoma",
+                    "multi": True,
+                    "align": "center",
+                },
+                "labelHighlightBold": False,
+            },
+            "edges": {
+                "arrows": {
+                    "to": {"enabled": True, "scaleFactor": 0.5}
+                },
+                "color": {"inherit": False},
+                "smooth": {"enabled": True, "type": "dynamic"},
+                "hoverWidth": 0
+            },
+            "physics": {
+                "enabled": False,
+            },
+            "interaction": {
+                "hover": True,
+                "multiselect": False,
+                "dragNodes": False
+            },
+            "layout": {
+                "hierarchical": {
+                    "enabled": True,
+                    "direction": "UD",  # Up-Down layout
+                    "sortMethod": "directed",
+                    "nodeSpacing": 260,
+                    "levelSeparation": 190
+                }
             }
-        })
-        return context
-    
-    def _get_relation_tree(self, obj, relation_type='parents', current_depth=0, max_depth=3, processed=None):
-        """
-        Recursively build relation tree (parents or children).
-        """
-        if processed is None:
-            processed = set()
-            
-        if current_depth >= max_depth or obj.id in processed:
-            return None
-            
-        processed.add(obj.id)
-        
-        relations_data = []
-        
-        # Get the correct relation based on type
-        if relation_type == 'parents':
-            relations = obj.parents.all()
-            next_relation_key = 'parents'
-        else:  # relation_type == 'children'
-            relations = obj.children.all()
-            next_relation_key = 'children'
-        
-        for relation in relations:
-            relation_data = {
-                'id': str(relation.id),
-                'name': str(relation),
-                'sambandsnummer': relation.sambandsnummer,
-                'depth': current_depth,
-                next_relation_key: self._get_relation_tree(
-                    relation, relation_type, current_depth + 1, max_depth, processed
-                )
-            }
-            relations_data.append(relation_data)
-            
-        return relations_data if relations_data else None
-    
-    def _flatten_tree(self, tree):
-        """Convert a nested tree to a flat list of direct relationships."""
-        if not tree:
-            return []
-        
-        # Return only top-level relations (no nesting)
-        return [{k: v for k, v in item.items() if k != 'parents' and k != 'children'} 
-                for item in tree]
-    
-    def _prepare_graph_data(self, current_node, parent_tree, child_tree):
-        """
-        Prepare graph data structure for D3 visualization.
-        
-        Returns:
-            dict: Contains 'nodes' and 'links' arrays for D3
-        """
-        nodes = []
-        links = []
-        
-        # Add current node
-        current_id = str(current_node.id)
-        nodes.append({
-            'id': current_id,
-            'name': str(current_node),
-            'sambandsnummer': current_node.sambandsnummer,
-            'type': 'current'
-        })
-        
-        # Process parent tree
-        if parent_tree:
-            self._process_relation_tree(parent_tree, nodes, links, current_id, True)
-        
-        # Process child tree
-        if child_tree:
-            self._process_relation_tree(child_tree, nodes, links, current_id, False)
-        
-        return {
-            'nodes': nodes,
-            'links': links
         }
-    
-    def _process_relation_tree(self, tree, nodes, links, connected_id, is_parent, current_depth=0):
-        """
-        Process a relation tree and add nodes and links.
         
-        Args:
-            tree: List of relation objects (can be nested)
-            nodes: List to add nodes to
-            links: List to add links to
-            connected_id: ID of the node these relations connect to
-            is_parent: True if these are parent relations, False for children
-            current_depth: Current recursion depth
-        """
-        if not tree:
-            return
+        # Add graph data to context
+        context['network_data'] = graph_data
+        context['network_options'] = options
+        context['depth'] = depth
         
-        for relation in tree:
-            # Skip if relation has no ID
-            if 'id' not in relation:
-                continue
-                
-            relation_id = relation['id']
-            
-            # Add node if it doesn't exist
-            if not any(n['id'] == relation_id for n in nodes):
-                nodes.append({
-                    'id': relation_id,
-                    'name': relation.get('name', 'Unknown'),
-                    'sambandsnummer': relation.get('sambandsnummer', ''),
-                    'depth': relation.get('depth', current_depth),
-                    'type': 'parent' if is_parent else 'child'
-                })
-            
-            # Add link
-            links.append({
-                'source': relation_id if is_parent else connected_id,
-                'target': connected_id if is_parent else relation_id,
-                'type': 'parent-child'
-            })
-            
-            # Process nested relations if they exist
-            next_relations_key = 'parents' if is_parent else 'children'
-            if next_relations_key in relation and relation[next_relations_key]:
-                self._process_relation_tree(
-                    relation[next_relations_key], 
-                    nodes, 
-                    links, 
-                    relation_id, 
-                    is_parent, 
-                    current_depth + 1
-                )
-
-class SambandPyvisFocusView(generic.ObjectView):
-    """PyVis Graph visualization for a single Samband."""
-    queryset = models.Samband.objects.all()
-    template_name = "praksis_nhn_nautobot/pyvis_focus_graph.html"
-
-    def get_extra_context(self, request, instance):
-        """Generate PyVis graph HTML and add to context."""
-        context = super().get_extra_context(request, instance)
-        depth = int(request.GET.get('depth', 1)) # Get depth from query param
-
-        # Generate the PyVis HTML using the utility function
-        pyvis_html = graph_utils.generate_focused_pyvis_html(instance.pk, depth=depth)
-
-        context['pyvis_graph_html'] = pyvis_html
-        context['current_depth'] = depth
-        context['depth_options'] = [1, 2, 3] # Or generate dynamically
         return context
 
 class SambandGraphView(generic.View):
@@ -300,7 +165,8 @@ class SambandGraphView(generic.View):
                     "to": {"enabled": True, "scaleFactor": 0.5}
                 },
                 "color": {"inherit": False},
-                "smooth": {"enabled": True, "type": "dynamic"}
+                "smooth": {"enabled": True, "type": "dynamic"},
+                "hoverWidth": 0
             },
             "physics": {
                 "enabled": False,

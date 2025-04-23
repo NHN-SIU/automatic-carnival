@@ -6,7 +6,15 @@
   <div class="col-md-12">
     <div class="panel panel-default">
       <div class="panel-heading">
-        <h3 class="panel-title">Graph view</h3>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+          <h3 class="panel-title" style="margin: 0;">Graph view for {{object}}</h3>
+          <div class="btn-group" role="group" aria-label="Depth Control">
+            <span class="btn btn-default disabled">Depth:</span>
+            {% for d in '123'|make_list %}
+              <a href="?depth={{ d }}" class="btn {% if depth == d|add:'0' %}btn-primary{% else %}btn-default{% endif %}">{{ d }}</a>
+            {% endfor %}
+          </div>
+        </div>
       </div>
       <div class="panel-body">
         <!-- Label Configuration Toolbox -->
@@ -96,7 +104,7 @@
 
 <!-- Include vis.js library -->
 <script src="https://cdn.jsdelivr.net/npm/vis-network@9.1.2/dist/vis-network.min.js"></script>
-{{ False|json_script:"is-focus-view" }}
+{{ True|json_script:"is-focus-view" }}
 {{ network_data.nodes|json_script:"nodes-data" }}
 {{ network_data.edges|json_script:"edges-data" }}
 {{ network_options|json_script:"options-data" }}

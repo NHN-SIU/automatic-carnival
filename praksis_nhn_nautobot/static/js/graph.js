@@ -24,6 +24,25 @@ const NetworkGraphRenderer = {
       document.getElementById("options-data").textContent
     );
 
+    // Check if we're in focus view
+    let focusNodeId = null;
+    const focusViewElement =
+      document.getElementById("is-focus-view").textContent;
+
+    if (focusViewElement == "true") {
+      focusNodeId = nodesData[0].id;
+
+      // Highlight the first node with a distinctive color
+      nodesData[0].color = {
+        background: "#FF9800", // Orange background
+        border: "#E65100", // Dark orange border
+        highlight: {
+          background: "#FFB74D", // Lighter orange when highlighted
+          border: "#E65100",
+        },
+      };
+    }
+
     // Create a map for quick lookup of node data by ID
     const nodeDataMap = this.createNodeDataMap(fullNodesData);
 
@@ -37,7 +56,7 @@ const NetworkGraphRenderer = {
 
     // Set up event handlers
     this.setupLabelHandlers(nodes, nodeDataMap);
-    this.setupHoverEffects(network, nodes, edges);
+    this.setupHoverEffects(network, nodes, edges, focusNodeId);
     this.setupClickHandler(network);
 
     return { network, nodes, edges, nodeDataMap };
@@ -134,7 +153,7 @@ const NetworkGraphRenderer = {
    * @param {DataSet} nodes - vis.js nodes dataset
    * @param {DataSet} edges - vis.js edges dataset
    */
-  setupHoverEffects: function (network, nodes, edges) {
+  setupHoverEffects: function (network, nodes, edges, focusNodeId) {
     // Node hover handler
     network.on("hoverNode", function (params) {
       const hoveredNodeId = params.node;
@@ -144,6 +163,11 @@ const NetworkGraphRenderer = {
       // Dim all nodes except hovered and connected
       nodes.getIds().forEach((nodeId) => {
         if (nodeId !== hoveredNodeId && !connectedNodes.includes(nodeId)) {
+          // Skip the focus node - preserve its color
+          if (focusNodeId && nodeId === focusNodeId) {
+            return;
+          }
+
           nodes.update({
             id: nodeId,
             color: {
@@ -183,6 +207,10 @@ const NetworkGraphRenderer = {
     network.on("blurNode", function () {
       // Restore all nodes to original colors
       nodes.getIds().forEach((nodeId) => {
+        // Skip the focus node - preserve its color
+        if (focusNodeId && nodeId === focusNodeId) {
+          return;
+        }
         nodes.update({
           id: nodeId,
           color: {
