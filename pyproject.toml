@@ -128,6 +128,7 @@ convention = "google"
 "praksis_nhn_nautobot/migrations/*" = [
     "D",
 ]
+"test_data/generate_dummy_data.py" = ["S311"]
 "praksis_nhn_nautobot/tests/*" = [
     "D",
     "S"

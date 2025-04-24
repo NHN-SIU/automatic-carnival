@@ -117,19 +117,12 @@ class SambandFilterForm(NautobotFilterForm):
 
     type = forms.ChoiceField(required=False, label="Type")
 
-    status = forms.ChoiceField(
-        required=False,
-        choices=[('', 'Any')]+models.Samband.STATUS_CHOICES,
-        label="Status"
-    )
+    status = forms.ChoiceField(required=False, choices=[("", "Any")] + models.Samband.STATUS_CHOICES, label="Status")
     location = forms.ChoiceField(
         required=False,
         label="Location",
     )
-    vendor = forms.ChoiceField(
-        required=False,
-        label="Vendor"
-    )
+    vendor = forms.ChoiceField(required=False, label="Vendor")
     transporttype = forms.ChoiceField(
         required=False,
         label="Transport Type",
@@ -156,18 +149,18 @@ class SambandFilterForm(NautobotFilterForm):
     )
 
     def __init__(self, *args, **kwargs):
+        """Initialize the form and set up choices for fields."""
         super().__init__(*args, **kwargs)
         # Fetch distinct location values from the Samband model
-        locations = models.Samband.objects.values_list('location', flat=True)
-        vendors = models.Samband.objects.values_list('vendor', flat=True).distinct()
-        transporttypes = models.Samband.objects.values_list('transporttype', flat=True).distinct()
-        types = models.Samband.objects.values_list('type', flat=True).distinct()
-        location_choices =          sorted([('', 'Any')] + [(loc, loc) for loc in set(locations) if loc])
-        vendor_choices =            sorted([('', 'Any')] + [(ven, ven) for ven in set(vendors) if ven])
-        transporttype_choices =     sorted([('', 'Any')] + [(tpt, tpt) for tpt in set(transporttypes) if tpt])
-        type_choices =              sorted([('', 'Any')] + [(tpt, tpt) for tpt in set(types) if tpt])
-        self.fields['location'].choices = location_choices
-        self.fields['vendor'].choices = vendor_choices
-        self.fields['transporttype'].choices = transporttype_choices
-        self.fields['type'].choices = type_choices
-        
+        locations = models.Samband.objects.values_list("location", flat=True)
+        vendors = models.Samband.objects.values_list("vendor", flat=True).distinct()
+        transporttypes = models.Samband.objects.values_list("transporttype", flat=True).distinct()
+        types = models.Samband.objects.values_list("type", flat=True).distinct()
+        location_choices = sorted([("", "Any")] + [(loc, loc) for loc in set(locations) if loc])
+        vendor_choices = sorted([("", "Any")] + [(ven, ven) for ven in set(vendors) if ven])
+        transporttype_choices = sorted([("", "Any")] + [(tpt, tpt) for tpt in set(transporttypes) if tpt])
+        type_choices = sorted([("", "Any")] + [(tpt, tpt) for tpt in set(types) if tpt])
+        self.fields["location"].choices = location_choices
+        self.fields["vendor"].choices = vendor_choices
+        self.fields["transporttype"].choices = transporttype_choices
+        self.fields["type"].choices = type_choices

@@ -82,7 +82,7 @@ invoke start
 ### 2.7 Testing
 To invoke the tests in 'praksis_nhn_nautobot/tests/' run this command:
 ```bash
-invoke test
+invoke tests
 ```
 
 ## Features

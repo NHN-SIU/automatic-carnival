@@ -4,6 +4,7 @@ from nautobot.apps.api import NautobotModelSerializer, TaggedModelSerializerMixi
 
 from praksis_nhn_nautobot import models
 
+
 class SambandSerializer(NautobotModelSerializer, TaggedModelSerializerMixin):  # pylint: disable=too-many-ancestors
     """Samband Serializer."""
 
