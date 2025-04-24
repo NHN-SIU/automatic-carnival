@@ -1,9 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Global variables
     let map, pointsLayer, connectionsLayer, radiusLayer;
-    let activeMarker = null;
     let activeLines = [];
-    let previouslyActiveMarkers = [];
     let featureIdToMarkers = {};
     let featureIdToLines = {};
     let locationMarker = null;
@@ -14,7 +12,6 @@ document.addEventListener('DOMContentLoaded', function() {
     let pinPlacementMode = false;
     let selectedConnectionId = null;
     let searchTimeout = null;
-    let selectedSuggestionIndex = -1;
     let last_used_params = null;
     
     // Status color mapping
@@ -80,7 +77,6 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    // Call this at the end of your initialization
     initLegendState();
     
     /**
@@ -89,14 +85,11 @@ document.addEventListener('DOMContentLoaded', function() {
     function initializeMap() {
       // Create the map
       map = new L.Map('leaflet', {
-        center: [65.4, 17.0],
-        zoom: 6,
         preferCanvas: true
       });
   
       // Add basemap layer
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19
       }).addTo(map);
   
@@ -107,7 +100,6 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Populate location type legend
       populateLocationTypeLegend();
-      // initLegendState();
     }
     
     /**
@@ -178,6 +170,7 @@ document.addEventListener('DOMContentLoaded', function() {
             icon.options.iconSize = [24, 24];
             icon.options.iconAnchor = [12, 12];
             marker.setIcon(icon);
+            marker.setZIndexOffset(0);
           });
         }
         
@@ -651,8 +644,6 @@ document.addEventListener('DOMContentLoaded', function() {
         graphLink.href = params ? `${graphBaseUrl}?${params}` : graphBaseUrl;
         graphLink.id = 'graph-view-link'; // Add an ID for easier future reference
       }
-      
-      console.log("Updated navigation links with params:", params);
     }
   
     /**
@@ -898,40 +889,6 @@ document.addEventListener('DOMContentLoaded', function() {
           fetchSearchSuggestions(searchValue);
         }, 300);
       });
-      
-      // Keyboard navigation for suggestions
-      document.getElementById('connection-search').addEventListener('keydown', function(e) {
-        const suggestionsEl = document.getElementById('search-suggestions');
-        const suggestions = suggestionsEl.querySelectorAll('.suggestion-item');
-        
-        if (suggestionsEl.style.display === 'none') {
-          if (e.key === 'Enter') {
-            // Apply filters when Enter is pressed without suggestions visible
-            document.getElementById('apply-filters').click();
-          }
-          return;
-        }
-        
-        if (e.key === 'ArrowDown') {
-          e.preventDefault();
-          selectedSuggestionIndex = Math.min(selectedSuggestionIndex + 1, suggestions.length - 1);
-          highlightSuggestion(selectedSuggestionIndex);
-        } else if (e.key === 'ArrowUp') {
-          e.preventDefault();
-          selectedSuggestionIndex = Math.max(selectedSuggestionIndex - 1, -1);
-          highlightSuggestion(selectedSuggestionIndex);
-        } else if (e.key === 'Enter') {
-          e.preventDefault();
-          if (selectedSuggestionIndex >= 0) {
-            suggestions[selectedSuggestionIndex].click();
-          } else {
-            // Apply filters when Enter is pressed without selecting a suggestion
-            document.getElementById('apply-filters').click();
-          }
-        } else if (e.key === 'Escape') {
-          suggestionsEl.style.display = 'none';
-        }
-      });
   
       // Hide suggestions when clicking elsewhere
       document.addEventListener('click', function(e) {
@@ -991,12 +948,10 @@ document.addEventListener('DOMContentLoaded', function() {
           params.append('radius', radius || '50');
         }
         
-        // Try using "vendors" (plural) as the parameter name for vendor filters
         document.querySelectorAll('input[name="vendor"]:checked').forEach(function(checkbox) {
-          params.append('vendor', checkbox.value);  // Change 'vendor' to 'vendors'
+          params.append('vendor', checkbox.value);
         });
         
-        // The rest of your code is correct
         document.querySelectorAll('input[name="status"]:checked').forEach(function(checkbox) {
           params.append('status', checkbox.value);
         });
@@ -1013,10 +968,6 @@ document.addEventListener('DOMContentLoaded', function() {
           params.append('transporttype', checkbox.value);
         });
         
-        // Always include these fields
-        // params.append('include_fields', 'status');
-        // params.append('include_fields', 'location_type');
-        
         loadMapData(params.toString());
       });
   
@@ -1031,7 +982,6 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('radius').value = '50';
         
         remove_pin();
-        // loadMapData('include_fields=status&include_fields=location_type');
         loadMapData();
       });
   
@@ -1077,12 +1027,6 @@ document.addEventListener('DOMContentLoaded', function() {
         map.invalidateSize();
       });
   
-      // Initialize map properly after DOM is fully loaded
-      // setTimeout(function() {
-      //   console.log("Map initialized after DOM load");
-      //   map.invalidateSize();
-      // }, 100);
-      // map.invalidateSize();
       setTimeout(function() {
         if (map){
           map.invalidateSize();

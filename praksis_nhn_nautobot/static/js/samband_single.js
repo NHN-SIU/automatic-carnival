@@ -268,31 +268,6 @@ document.addEventListener('DOMContentLoaded', function() {
       return data;
     }
     
-    // Handle error display
-    function showError(error) {
-      console.error('Error loading connection:', error);
-      document.getElementById('connection-name').textContent = 'Error Loading Connection';
-      document.getElementById('connection-badges').innerHTML = '<span class="badge bg-danger">Error</span>';
-      document.getElementById('quick-info').innerHTML = `
-        <div class="col-12">
-          <div class="alert alert-danger">
-            <i class="fas fa-exclamation-circle"></i> 
-            ${error.message || 'Error loading connection details.'}
-          </div>
-        </div>
-      `;
-      
-      // Show error on map
-      if (!map) map = initMap();
-      map.setView([65.4, 17.0], 5);
-      
-      // Show error in point details
-      document.getElementById('point-a-details').innerHTML = '<p class="text-danger">Could not load point details</p>';
-      document.getElementById('point-b-details').innerHTML = '<p class="text-danger">Could not load point details</p>';
-      document.getElementById('point-a-icon').innerHTML = '<i class="fa-solid fa-exclamation-circle" style="color: #dc3545; font-size: 14px;"></i>';
-      document.getElementById('point-b-icon').innerHTML = '<i class="fa-solid fa-exclamation-circle" style="color: #dc3545; font-size: 14px;"></i>';
-    }
-    
     // Main execution - only proceed if we have a connection ID
     if (connectionId) {
       // Fetch connection data and update page
