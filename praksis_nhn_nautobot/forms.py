@@ -108,7 +108,7 @@ class SambandFilterForm(NautobotFilterForm):
     """
     Filter form to filter searches.
 
-    Define all fields to be filtered in the "default" section (in the UI)
+    Define all fields to be filtered in the "default" section (in the samband list UI)
     """
 
     model = models.Samband
@@ -149,7 +149,10 @@ class SambandFilterForm(NautobotFilterForm):
     )
 
     def __init__(self, *args, **kwargs):
-        """Initialize the form and set up choices for fields."""
+        """Initialize the form and set up choices for fields.
+        
+        The choises for the fields are dynamically populated from the database.
+        """
         super().__init__(*args, **kwargs)
         # Fetch distinct location values from the Samband model
         locations = models.Samband.objects.values_list("location", flat=True)
