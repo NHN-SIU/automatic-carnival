@@ -128,10 +128,14 @@ invoke tests
 ## Features
 
 ### List feature
-- List showing samband with some chosen fields
-- Go directly to map or graph view of a specific samband
-- Filter over different data
+The list view provides a textual representation of `samband` entries, including selected data fields.
 
+Key functionalities:
+1. Display a list of samband with relevant metadata.
+2. Direct links to switch to map or graph view for a specific samband.
+3. Filtering functionality based on a single field value at a time.
+
+**Note:** Unlike the map view, the list does not currently support filtering by multiple values in the same field (e.g., showing samband in both **"Bergen"** and **"Oslo"** at the same time).
 
 
 ### Map Feature
