@@ -11,7 +11,7 @@
         Map
     </a>
     {% if request.GET %}
-    <a href="{% url 'plugins:praksis_nhn_nautobot:samband_graph' %}?{{ request.GET.urlencode }}" class="btn btn-primary">
+    <a href="{{ graph_url }}" class="btn btn-primary">
         <i class="mdi mdi-graph"></i>
         View selection in graph
     </a>

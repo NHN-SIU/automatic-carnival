@@ -16,6 +16,7 @@ from praksis_nhn_nautobot.services.graph_service import SambandGraphService
 from praksis_nhn_nautobot import filters, forms, models, tables
 from praksis_nhn_nautobot.api import serializers
 from praksis_nhn_nautobot.services.graph_service import SambandGraphService
+from praksis_nhn_nautobot.utils import cache_utils
 
 from math import radians, cos, sin, asin, sqrt
 from .models import Samband
@@ -191,17 +192,49 @@ class SambandUIViewSet(NautobotUIViewSet):
         ],
         # TODO implement drop-down button
     )
-    
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        if self.request.GET:
-            # Generate a cache key from the current filters
-            cache_key = f"samband_filtered_{urlencode(sorted(self.request.GET.items()))}"
-            # Store the queryset IDs in cache (can't pickle querysets directly)
-            object_ids = list(queryset.values_list('id', flat=True))
-            cache.set(cache_key, object_ids, 300)  # Cache for 5 minutes
 
+    def get_queryset(self):
+        # First check if we have a selection_id
+        selection_id = self.request.GET.get('selection_id')
+        if selection_id:
+            object_ids, filter_params = cache_utils.get_cached_selection(selection_id)
+            
+            # From individual node view
+            if object_ids:
+                return models.Samband.objects.filter(id__in=object_ids)
+        
+        # Otherwise use normal queryset with filters
+        queryset = super().get_queryset()
+        
+        # Cache the results if we have filter parameters
+        if self.request.GET:
+            # Extract filter parameters (excluding page, ordering, etc.)
+            filter_params = {k: v for k, v in self.request.GET.items() 
+                             if k not in ['page', 'per_page', 'ordering']}
+            
+            # Cache both the selection and filter parameters
+            selection_id = cache_utils.cache_selection_and_filters(queryset, filter_params)
+
+            # Store the selection_id for use in the template
+            self.selection_id = selection_id
+        
         return queryset
+    
+    def get_extra_context(self, request, *args, **kwargs):
+        context = super().get_extra_context(request, *args, **kwargs)
+        
+        # Get selection_id from the request or from processing
+        selection_id = request.GET.get('selection_id')
+        if not selection_id and hasattr(self, 'selection_id'):
+            selection_id = self.selection_id
+        
+        if selection_id:
+            # Add view switching URLs to context
+            context['map_url'] = f'/plugins/praksis-nhn-nautobot/samband/map/?selection_id={selection_id}'
+            context['graph_url'] = f'/plugins/praksis-nhn-nautobot/samband/graph/?selection_id={selection_id}'
+            context['selection_id'] = selection_id
+        
+        return context
 
 class SambandGraphFocusView(generic.ObjectView):
     """Graph visualization for Samband."""
@@ -275,7 +308,13 @@ class SambandGraphView(generic.View):
         context = self.get_context_data(**kwargs)
         return render(request, self.template_name, context)
     
-    def get_queryset(self):        
+    def get_queryset(self):
+        selection_id = self.request.GET.get('selection_id')
+        if selection_id:
+            object_ids, _ = cache_utils.get_cached_selection(selection_id)
+            if object_ids:
+                return Samband.objects.filter(id__in=object_ids)
+
         if self.request.GET:
             # Try to get cached results with the same key used in list view
             cache_key = f"samband_filtered_{urlencode(sorted(self.request.GET.items()))}"
@@ -284,13 +323,24 @@ class SambandGraphView(generic.View):
             if cached_ids:
                 # Use the cached object IDs
                 return Samband.objects.filter(id__in=cached_ids)
+            
+            # No cache found, but we have filter parameters, so create a new cache
+            queryset = Samband.objects.all()
+            # Apply filters here if needed
+            
+            # Cache the results with both methods for future use
+            filter_params = {k: v for k, v in self.request.GET.items() 
+                            if k not in ['page', 'per_page', 'ordering']}
+            
+            self.selection_id = cache_utils.cache_selection_and_filters(queryset, filter_params)
+            return queryset
         
         # If no cache or cache miss, fall back to filtering again
         queryset = Samband.objects.all()        
         return queryset
     
     def get_context_data(self, **kwargs):
-        context = {} 
+        context = kwargs.copy() if kwargs else {}
         queryset = self.get_queryset()
 
         serialized_data = SambandSerializer(queryset, many=True, context={'request': self.request}).data
@@ -326,6 +376,15 @@ class SambandGraphView(generic.View):
                 "dragNodes": False
             }
         }
+        # Add selection_id and view switching URLs
+        selection_id = self.request.GET.get('selection_id')
+        if not selection_id and hasattr(self, 'selection_id'):
+            selection_id = self.selection_id
+        
+        if selection_id:
+            context['table_url'] = f'/plugins/praksis-nhn-nautobot/samband/?selection_id={selection_id}'
+            context['map_url'] = f'/plugins/praksis-nhn-nautobot/samband/map/?selection_id={selection_id}'
+            context['selection_id'] = selection_id
         
         # Add to context (convert Python objects to JSON strings for the template)
         context['network_data'] = graph_data
