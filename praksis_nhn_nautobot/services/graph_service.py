@@ -81,28 +81,32 @@ class SambandGraphService:
         }
 
     @classmethod
-    def get_relations(self, instance, depth=2):
-        parents=self.get_parents(instance, depth)
-        children=self.get_children(instance, depth)
-        return [instance]+parents+children
-        
+    def get_relations(cls, instance, depth=2):
+        parents = cls._traverse_graph(instance, depth, direction="up")
+        children = cls._traverse_graph(instance, depth, direction="down")
+        return [instance] + parents + children
+
     @staticmethod
-    def get_parents(instance, depth):
+    def _traverse_graph(instance, depth, direction="up"):
         """
-        Retrieve all parent nodes up to the specified depth using non-recursive BFS.
+        Generic method to traverse the graph in either direction using BFS.
         
         Args:
-            instance: The Samband object to get parents for
-            depth: How many levels up to traverse
+            instance: The Samband object to start traversal from
+            depth: How many levels to traverse
+            direction: "up" for parents, "down" for children
             
         Returns:
-            list: List of parent objects with all their fields
+            list: List of related objects
         """
         result = []
         visited = set()  # To track visited nodes
         
-        # Queue entries: (node, current_depth)
-        queue = deque([(parent, 1) for parent in instance.parents.all()])
+        # Initialize queue based on direction
+        if direction == "up":
+            queue = deque([(parent, 1) for parent in instance.parents.all()])
+        else:  # direction == "down"
+            queue = deque([(child, 1) for child in Samband.objects.filter(parents=instance)])
         
         while queue:
             current_node, current_depth = queue.popleft()
@@ -112,49 +116,16 @@ class SambandGraphService:
                 continue
                 
             visited.add(current_node.id)
-            
-            # Serialize the parent
             result.append(current_node)
             
-            # If we haven't reached max depth, add this node's parents to the queue
+            # If we haven't reached max depth, add next level nodes to the queue
             if current_depth < depth:
-                for parent in current_node.parents.all():
-                    queue.append((parent, current_depth + 1))
-
-        return result
-
-    @staticmethod
-    def get_children(instance, depth):
-        """
-        Retrieve all child nodes down to the specified depth using non-recursive BFS.
-        
-        Args:
-            instance: The Samband object to get children for
-            depth: How many levels down to traverse (default: 2)
-            
-        Returns:
-            list: List of child objects with all their fields
-        """
-        result = []
-        visited = set()  # To track visited nodes
-        
-        # Queue entries: (node, current_depth)
-        queue = deque([(child, 1) for child in Samband.objects.filter(parents=instance)])
-        
-        while queue:
-            current_node, current_depth = queue.popleft()
-            
-            # Skip if we've already processed this node or exceeded depth
-            if current_node.id in visited or current_depth > depth:
-                continue
-                
-            visited.add(current_node.id)
-            
-            result.append(current_node)
-            
-            # If we haven't reached max depth, add this node's children to the queue
-            if current_depth < depth:
-                for child in Samband.objects.filter(parents=current_node):
-                    queue.append((child, current_depth + 1))
+                if direction == "up":
+                    next_nodes = current_node.parents.all()
+                else:  # direction == "down"
+                    next_nodes = Samband.objects.filter(parents=current_node)
+                    
+                for next_node in next_nodes:
+                    queue.append((next_node, current_depth + 1))
         
         return result
