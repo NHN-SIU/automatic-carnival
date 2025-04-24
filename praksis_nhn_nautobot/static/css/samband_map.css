@@ -304,3 +304,56 @@
 #toggle-legend i {
   transition: transform 0.3s ease;
 }
+
+/* Right sidebar collapse/expand functionality */
+.sidebar-right {
+  flex: 0 0 300px;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.sidebar-right.collapsed {
+  flex: 0 0 0;
+  width: 0;
+  overflow: hidden;
+  padding: 0;
+  margin: 0;
+  border: none;
+}
+
+.sidebar-right-toggle {
+  position: absolute;
+  top: 50%;
+  right: 30px; /* Position it at the left edge of sidebar */
+  z-index: 500;
+  transform: translateY(-50%);
+}
+
+#toggle-sidebar {
+  width: 24px;
+  height: 40px;
+  border-radius: 4px 0 0 4px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: -2px 0 5px rgba(0,0,0,0.1);
+  margin-right: -1px; /* Overlap slightly with sidebar */
+}
+
+.sidebar-right.collapsed + .sidebar-right-toggle {
+  right: 0; /* Move to edge when sidebar is collapsed */
+}
+
+.sidebar-right.collapsed ~ .sidebar-right-toggle #toggle-sidebar i {
+  transform: rotate(180deg);
+}
+
+#toggle-sidebar i {
+  transition: transform 0.3s ease;
+}
+
+/* When sidebar is collapsed, make map section grow */
+.sidebar-right.collapsed ~ .map-section {
+  flex: 1;
+}

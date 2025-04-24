@@ -1,0 +1,43 @@
+/* Map styling */
+#connection-map {
+    height: 500px;
+    width: 100%;
+  }
+  
+  /* Endpoint icon styling */
+  .endpoint-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  }
+  
+  /* Info cards styling */
+  .card.h-100 {
+    transition: transform 0.2s;
+  }
+  
+  .card.h-100:hover {
+    transform: translateY(-2px);
+  }
+  
+  /* Badge styling */
+  .badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+  }
+  
+  /* Error state styling */
+  .alert-danger i {
+    margin-right: 5px;
+  }
+  
+  /* Loading spinner */
+  .fa-spin {
+    font-size: 14px;
+    color: #6c757d;
+  }

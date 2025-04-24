@@ -15,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedConnectionId = null;
     let searchTimeout = null;
     let selectedSuggestionIndex = -1;
+    let last_used_params = null;
     
     // Status color mapping
     const statusColors = {
@@ -80,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Call this at the end of your initialization
-    // initLegendState();
+    initLegendState();
     
     /**
      * Initialize the map and layers
@@ -105,29 +106,34 @@ document.addEventListener('DOMContentLoaded', function() {
       radiusLayer = L.layerGroup().addTo(map);
       
       // Populate location type legend
-      // populateLocationTypeLegend();
-      initLegendState();
+      populateLocationTypeLegend();
+      // initLegendState();
     }
     
     /**
      * Populate legend with location type icons
      */
-    // function populateLocationTypeLegend() {
-    //   const locationTypeLegend = document.getElementById('location-type-legend');
-    //   for (const [type, config] of Object.entries(locationTypeIcons)) {
-    //     const item = document.createElement('div');
-    //     item.className = 'legend-item';
+    function populateLocationTypeLegend() {
+      const locationTypeLegend = document.getElementById('location-type-legend');
+      for (const [type, config] of Object.entries(locationTypeIcons)) {
+        const item = document.createElement('div');
+        item.className = 'legend-item';
         
-    //     item.innerHTML = `
-    //       <div style="width: 16px; margin-right: 5px; text-align: center;">
-    //         <i class="${config.icon}" style="color: ${config.color}; font-size: 12px;"></i>
-    //       </div>
-    //       <span>${type}</span>
-    //     `;
+        item.innerHTML = `
+          <div style="width: 16px; margin-right: 5px; text-align: center;">
+            <i class="${config.icon}" style="color: ${config.color}; font-size: 12px;"></i>
+          </div>
+          <span>${type}</span>
+        `;
         
-    //     locationTypeLegend.appendChild(item);
-    //   }
-    // }
+        locationTypeLegend.appendChild(item);
+
+      }
+      const wasCollapsed = localStorage.getItem('map_legend_collapsed');
+      if (wasCollapsed === 'true') {
+        document.querySelector('.map-legend').classList.add('collapsed');
+      }
+    }
     
     /**
      * Create a custom icon for a location type
@@ -501,7 +507,7 @@ document.addEventListener('DOMContentLoaded', function() {
       // If not on map, fetch it specifically
       document.getElementById('loading-indicator').style.display = 'block';
       
-      fetch(`/plugins/praksis-nhn-nautobot/samband/map-data/?connection_id=${connectionId}`)
+      fetch(`/plugins/praksis-nhn-nautobot/api/samband/map-data/?connection_id=${connectionId}`)
         .then(response => response.json())
         .then(data => {
           // Clear existing connections but keep radius if present
@@ -568,7 +574,7 @@ document.addEventListener('DOMContentLoaded', function() {
      * Fetch connection details from the API
      */
     function fetchConnectionDetails(connectionId, callback) {
-      fetch(`/plugins/praksis-nhn-nautobot/samband/map-data/?connection_id=${connectionId}`)
+      fetch(`/plugins/praksis-nhn-nautobot/api/samband/map-data/?connection_id=${connectionId}`)
         .then(response => response.json())
         .then(data => {
           console.log("Connection details received:", data);
@@ -591,19 +597,13 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('loading-indicator').style.display = 'block';
       document.getElementById('connection-count').textContent = 'Loading...';
       
-      let url = '/plugins/praksis-nhn-nautobot/samband/map-data/';
+      let url = '/plugins/praksis-nhn-nautobot/api/samband/map-data/';
       if (params) {
         url += '?' + params;
-        // Always include status for coloring
-        if (params.indexOf('include_fields') === -1) {
-          url += '&include_fields=status&include_fields=location_type';
-        } else if (params.indexOf('include_fields=status') === -1) {
-          url += '&include_fields=status&include_fields=location_type';
-        }
-      } else {
-        url += '?include_fields=status&include_fields=location_type';
+        console.log("Loading map data with params:", params);
       }
       
+      console.log("URL:", url);
       fetch(url)
         .then(response => {
           if (!response.ok) {
@@ -612,6 +612,13 @@ document.addEventListener('DOMContentLoaded', function() {
           return response.json();
         })
         .then(data => {
+          // Store the current params
+          last_used_params = params;
+          console.log("last used params:", last_used_params);
+          
+          // Update all navigation links with current params
+          updateNavigationLinks();
+          
           console.log(`Received ${data.count} connections:`, data);
           processMapData(data);
         })
@@ -622,6 +629,30 @@ document.addEventListener('DOMContentLoaded', function() {
         .finally(() => {
           document.getElementById('loading-indicator').style.display = 'none';
         });
+    }
+  
+    /**
+     * Update links to maintain filter parameters across different views
+     */
+    function updateNavigationLinks() {
+      const params = last_used_params || '';
+      
+      // Update the "Back to List" link
+      const listLink = document.getElementById('back-to-list-link');
+      if (listLink) {
+        const listBaseUrl = listLink.getAttribute('href').split('?')[0];
+        listLink.href = params ? `${listBaseUrl}?${params}` : listBaseUrl;
+      }
+      
+      // Update the "View selection in graph" link
+      const graphLink = document.querySelector('a[href*="samband_graph"]');
+      if (graphLink) {
+        const graphBaseUrl = graphLink.getAttribute('href').split('?')[0];
+        graphLink.href = params ? `${graphBaseUrl}?${params}` : graphBaseUrl;
+        graphLink.id = 'graph-view-link'; // Add an ID for easier future reference
+      }
+      
+      console.log("Updated navigation links with params:", params);
     }
   
     /**
@@ -756,7 +787,7 @@ document.addEventListener('DOMContentLoaded', function() {
       document.getElementById('search-suggestions').innerHTML = '<div style="padding: 8px 12px; text-align: center;"><i class="fas fa-spinner fa-spin"></i> Searching...</div>';
       document.getElementById('search-suggestions').style.display = 'block';
   
-      fetch(`/plugins/praksis-nhn-nautobot/samband/search-suggestions/?q=${encodeURIComponent(query)}`)
+      fetch(`/plugins/praksis-nhn-nautobot/api/samband/search-suggestions/?q=${encodeURIComponent(query)}`)
         .then(response => {
           if (!response.ok) {
             throw new Error(`Network response error: ${response.status}`);
@@ -945,6 +976,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
       });
   
+
       // Apply filters button
       document.getElementById('apply-filters').addEventListener('click', function() {
         const params = new URLSearchParams();
@@ -959,12 +991,14 @@ document.addEventListener('DOMContentLoaded', function() {
           params.append('radius', radius || '50');
         }
         
-        document.querySelectorAll('input[name="vendors"]:checked').forEach(function(checkbox) {
-          params.append('vendors', checkbox.value);
+        // Try using "vendors" (plural) as the parameter name for vendor filters
+        document.querySelectorAll('input[name="vendor"]:checked').forEach(function(checkbox) {
+          params.append('vendor', checkbox.value);  // Change 'vendor' to 'vendors'
         });
         
-        document.querySelectorAll('input[name="statuses"]:checked').forEach(function(checkbox) {
-          params.append('statuses', checkbox.value);
+        // The rest of your code is correct
+        document.querySelectorAll('input[name="status"]:checked').forEach(function(checkbox) {
+          params.append('status', checkbox.value);
         });
         
         document.querySelectorAll('input[name="location"]:checked').forEach(function(checkbox) {
@@ -975,13 +1009,13 @@ document.addEventListener('DOMContentLoaded', function() {
           params.append('location_type', checkbox.value);
         });
         
-        document.querySelectorAll('input[name="transport_type"]:checked').forEach(function(checkbox) {
-          params.append('transport_type', checkbox.value);
+        document.querySelectorAll('input[name="transporttype"]:checked').forEach(function(checkbox) {
+          params.append('transporttype', checkbox.value);
         });
         
         // Always include these fields
-        params.append('include_fields', 'status');
-        params.append('include_fields', 'location_type');
+        // params.append('include_fields', 'status');
+        // params.append('include_fields', 'location_type');
         
         loadMapData(params.toString());
       });
@@ -997,7 +1031,8 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('radius').value = '50';
         
         remove_pin();
-        loadMapData('include_fields=status&include_fields=location_type');
+        // loadMapData('include_fields=status&include_fields=location_type');
+        loadMapData();
       });
   
       // Use current location checkbox
@@ -1043,8 +1078,55 @@ document.addEventListener('DOMContentLoaded', function() {
       });
   
       // Initialize map properly after DOM is fully loaded
+      // setTimeout(function() {
+      //   console.log("Map initialized after DOM load");
+      //   map.invalidateSize();
+      // }, 100);
+      // map.invalidateSize();
       setTimeout(function() {
-        map.invalidateSize();
-      }, 100);
+        if (map){
+          map.invalidateSize();
+        }        
+      }, 300);
+    }
+
+    // Set up sidebar toggle functionality
+    function setupSidebarToggle() {
+      const toggleSidebarBtn = document.getElementById('toggle-sidebar');
+      const sidebarRight = document.querySelector('.sidebar-right');
+      
+      if (!toggleSidebarBtn || !sidebarRight) return;
+      
+      toggleSidebarBtn.addEventListener('click', function() {
+        sidebarRight.classList.toggle('collapsed');
+        
+        // Store preference in localStorage
+        localStorage.setItem('connections_list_collapsed', sidebarRight.classList.contains('collapsed'));
+        
+        // Resize map to adjust to new layout
+        setTimeout(function() {
+          if (map) map.invalidateSize();
+        }, 300); // Wait for transition to complete
+      });
+      
+      // Check if sidebar was collapsed in previous session
+      const wasCollapsed = localStorage.getItem('connections_list_collapsed');
+      if (wasCollapsed === 'true') {
+        sidebarRight.classList.add('collapsed');
+        // Resize map after sidebar is collapsed
+        setTimeout(function() {
+          if (map) map.invalidateSize();
+        }, 100);
+      }
+    }
+
+    // Set up sidebar toggle
+    setupSidebarToggle();
+
+    // If URL has params on initial load, use them for the navigation links
+    const initialParams = getURLParameters();
+    if (initialParams) {
+      last_used_params = initialParams;
+      updateNavigationLinks();
     }
   });

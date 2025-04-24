@@ -82,6 +82,15 @@ class SambandTable(BaseTable):
     )
     
     type = tables.Column()
+    type = tables.TemplateColumn(
+        template_code="""
+            <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?type={{ record.type|urlencode }}" title="View all {{ record.type }} connections">
+                {{ record.type }}
+            </a>
+        """,
+        orderable=True,
+        verbose_name="Type"
+    )
 
     location_type = tables.TemplateColumn(
         template_code="""
@@ -102,7 +111,16 @@ class SambandTable(BaseTable):
         orderable=True,
         verbose_name="Vendor"
     )
-    transporttype = tables.Column()
+    # transporttype = tables.Column()
+    transporttype = tables.TemplateColumn(
+        template_code="""
+            <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?transporttype={{ record.transporttype|urlencode }}" title="View all connections that uses {{ record.transporttype }}">
+                {{ record.transporttype }}
+            </a>
+        """,
+        orderable=True,
+        verbose_name="Transport type"
+    )
     parents = tables.TemplateColumn(
         template_code="""
             {% for parent in record.parents.all %}
