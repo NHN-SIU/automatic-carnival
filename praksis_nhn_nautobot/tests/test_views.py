@@ -1,7 +1,5 @@
 """Unit tests for views."""
 
-
-
 """ This test class is commented out because it doesn't work with the current setup."""
 # from praksis_nhn_nautobot.models import Samband
 # from praksis_nhn_nautobot.tests import fixtures
