@@ -8,9 +8,10 @@ from django.http import JsonResponse
 from django.shortcuts import render
 from django.utils.http import urlencode
 from django.views.generic import TemplateView, View
-from nautobot.apps.ui import Button, DropdownButton, ObjectDetailContent, ObjectFieldsPanel, SectionChoices
+from nautobot.apps.ui import DropdownButton, ObjectDetailContent, ObjectFieldsPanel, SectionChoices
 from nautobot.apps.views import NautobotUIViewSet
 from nautobot.core.choices import ButtonColorChoices
+from nautobot.core.ui.object_detail import Button
 from nautobot.core.views import generic
 
 from praksis_nhn_nautobot import filters, forms, models, tables
