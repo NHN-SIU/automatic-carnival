@@ -4,15 +4,26 @@
 {% block content %}
 <div class="row">
   <div class="col-md-12">
+    <div style="margin-bottom: 15px;">
+      <a href="{% url 'plugins:praksis_nhn_nautobot:samband_list' %}" id="back-to-list-btn" class="btn btn-secondary">
+        <span class="glyphicon glyphicon-arrow-left"></span> Back to list
+      </a>
+    </div>
+
     <div class="panel panel-default">
       <div class="panel-heading">
         <div style="display: flex; justify-content: space-between; align-items: center;">
           <h3 class="panel-title" style="margin: 0;">Graph view for {{object}}</h3>
-          <div class="btn-group" role="group" aria-label="Depth Control">
-            <span class="btn btn-default disabled">Depth:</span>
-            {% for d in '123'|make_list %}
-              <a href="?depth={{ d }}" class="btn {% if depth == d|add:'0' %}btn-primary{% else %}btn-default{% endif %}">{{ d }}</a>
-            {% endfor %}
+          <div style="display: flex; align-items: center;">
+            <a href="{% url 'plugins:praksis_nhn_nautobot:samband' object.pk %}" id="view-samband-detail-btn" class="btn btn-secondary" style="margin-right: 15px;">
+              <span class="glyphicon glyphicon-list"></span> View Samband in detail
+            </a>
+            <div class="btn-group" role="group" aria-label="Depth Control">
+              <span class="btn btn-default disabled">Depth:</span>
+              {% for d in '123'|make_list %}
+                <a href="?depth={{ d }}" class="btn {% if depth == d|add:'0' %}btn-primary{% else %}btn-default{% endif %}">{{ d }}</a>
+              {% endfor %}
+            </div>
           </div>
         </div>
       </div>
@@ -90,15 +101,20 @@
         <div id="network-container" style="height: 600px; width: 100%;"></div>
 
         <div class="text-center" style="margin-top: 20px;">
-          <a href="{% url 'plugins:praksis_nhn_nautobot:samband' object.pk %}" id="view-samband-detail-btn" class="btn btn-secondary" style="margin-right: 10px;">
-            <span class="glyphicon glyphicon-list"></span> View Samband in detail
-          </a>
-          <a href="#" id="view-table-btn" class="btn btn-secondary" style="margin-right: 10px;">
-            <span class="glyphicon glyphicon-list"></span> View selection in table
-          </a>
-          <a href="#" id="view-map-btn" class="btn btn-secondary">
-            <span class="glyphicon glyphicon-map-marker"></span> View selection in map
-          </a>
+          <div class="legend-container">
+            <div style="display: inline-block; margin-right: 10px;">
+              <span style="display: inline-block; width: 12px; height: 12px; background-color: #FF9800; border: 2px solid #E65100; border-radius: 50%; vertical-align: middle; margin-right: 5px;"></span>
+              <span>Current node</span>
+            </div>
+            <div style="display: inline-block; margin-right: 15px;">
+              <span style="display: inline-block; width: 20px; height: 3px; background-color: #008000; vertical-align: middle; margin-right: 5px;"></span>
+              <span>Green (incoming) = Parent node</span>
+            </div>
+            <div style="display: inline-block;">
+              <span style="display: inline-block; width: 20px; height: 3px; background-color: #E53935; vertical-align: middle; margin-right: 5px;"></span>
+              <span>Red (outgoing) = Children node</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>

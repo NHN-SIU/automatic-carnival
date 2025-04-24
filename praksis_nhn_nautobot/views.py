@@ -215,19 +215,6 @@ class SambandUIViewSet(NautobotUIViewSet):
         # TODO implement drop-down button
     )
 
-    def get_queryset(self):
-        """Override the get_queryset method to cache filtered results."""
-        queryset = super().get_queryset()
-        if self.request.GET:
-            # Generate a cache key from the current filters
-            cache_key = f"samband_filtered_{urlencode(sorted(self.request.GET.items()))}"
-            # Store the queryset IDs in cache (can't pickle querysets directly)
-            object_ids = list(queryset.values_list("id", flat=True))
-            cache.set(cache_key, object_ids, 300)  # Cache for 5 minutes
-
-        return queryset
-
-
 class SambandGraphFocusView(generic.ObjectView):
     """Graph visualization for Samband."""
 
@@ -296,22 +283,17 @@ class SambandGraphView(generic.View):
         """Handle GET requests."""
         context = self.get_context_data(**kwargs)
         return render(request, self.template_name, context)
-
+    
     def get_queryset(self):
-        """Override the get_queryset method to cache filtered results."""
-        if self.request.GET:
-            # Try to get cached results with the same key used in list view
-            cache_key = f"samband_filtered_{urlencode(sorted(self.request.GET.items()))}"
-            cached_ids = cache.get(cache_key)
-
-            if cached_ids:
-                # Use the cached object IDs
-                return Samband.objects.filter(id__in=cached_ids)
-
-        # If no cache or cache miss, fall back to filtering again
-        queryset = Samband.objects.all()
-        return queryset
-
+        """Use the filterset defined in filters.py to apply filtering."""
+        queryset = models.Samband.objects.all()
+        filterset = filters.SambandFilterSet(
+            data=self.request.GET,
+            queryset=queryset,
+            request=self.request
+        )
+        return filterset.qs
+    
     def get_context_data(self, **kwargs):
         """Add graph data to the context."""
         context = {}
@@ -340,9 +322,25 @@ class SambandGraphView(generic.View):
                 "hoverWidth": 0,
             },
             "physics": {
-                "enabled": False,
-            },
-            "interaction": {"hover": True, "multiselect": False, "dragNodes": False},
+                "enabled": True,
+                "forceAtlas2Based": {
+                    "gravitationalConstant": -100,
+                    "centralGravity": 0.01,
+                    "springLength": 200,
+                    "springConstant": 0.08,
+                    "avoidOverlap": 1.0
+                },
+                "solver": "forceAtlas2Based",
+                "stabilization": {
+                    "enabled": True,
+                    "iterations": 1000,
+                    "updateInterval": 50
+                }},
+            "interaction": {
+                "hover": True,
+                "multiselect": False,
+                "dragNodes": False
+            }
         }
 
         # Add to context (convert Python objects to JSON strings for the template)

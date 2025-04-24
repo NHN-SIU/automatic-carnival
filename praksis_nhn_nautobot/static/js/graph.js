@@ -24,6 +24,26 @@ const NetworkGraphRenderer = {
       document.getElementById("options-data").textContent
     );
 
+    // Check if there are no nodes to display
+    if (!nodesData || nodesData.length === 0) {
+      // Display a message to the user
+      container.innerHTML = `
+            <div class="empty-graph-message" style="text-align: center; padding: 50px; color: #666;">
+              <i class="mdi mdi-chart-network" style="font-size: 48px; margin-bottom: 20px; display: block;"></i>
+              <h3>No connections to display</h3>
+              <p>Try adjusting your filters or adding new connections.</p>
+            </div>
+          `;
+
+      // Return an empty object with minimal properties to prevent errors
+      return {
+        network: null,
+        nodes: null,
+        edges: null,
+        nodeDataMap: {},
+      };
+    }
+
     // Check if we're in focus view
     let focusNodeId = null;
     const focusViewElement =
