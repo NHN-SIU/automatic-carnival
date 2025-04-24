@@ -1,48 +1,8 @@
-# """Tables for praksis_nhn_nautobot."""
-
-# import django_tables2 as tables
-# from nautobot.apps.tables import BaseTable, ButtonsColumn, ToggleColumn
-
-# from praksis_nhn_nautobot import models
-
-
-# class SambandTable(BaseTable):
-#     # pylint: disable=R0903
-#     """Table for list view."""
-
-#     pk = ToggleColumn()
-#     name = tables.Column(linkify=True)
-#     actions = ButtonsColumn(
-#         models.Samband,
-#         # Option for modifying the default action buttons on each row:
-#         buttons=("changelog", "edit", "delete"),
-        
-#         # Option for modifying the pk for the action buttons:
-#         pk_field="pk",
-#     )
-
-#     class Meta(BaseTable.Meta):
-#         """Meta attributes."""
-
-#         model = models.Samband
-#         fields = (
-#             "pk",
-#             "name",
-#         )
-
-#         # Option for modifying the columns that show up in the list view by default:
-#         default_columns = (
-#             "pk",
-#             "name",
-#         )
-
-
 """Tables for praksis_nhn_nautobot."""
 
 import django_tables2 as tables
 from django_tables2.columns import TemplateColumn
-from django.urls import reverse
-from nautobot.apps.tables import BaseTable, ButtonsColumn, ToggleColumn
+from nautobot.apps.tables import BaseTable 
 
 from praksis_nhn_nautobot import models
 
@@ -51,7 +11,6 @@ class SambandTable(BaseTable):
     # pylint: disable=R0903
     """Table for list view."""
 
-    pk = ToggleColumn()
     name = tables.Column(linkify=True)
     status = TemplateColumn(
         template_code="""
@@ -78,9 +37,9 @@ class SambandTable(BaseTable):
             </a>
         """,
         orderable=True,
-        verbose_name="Location"
+        verbose_name="Location",
     )
-    
+
     type = tables.Column()
     type = tables.TemplateColumn(
         template_code="""
@@ -99,7 +58,7 @@ class SambandTable(BaseTable):
             </a>
         """,
         orderable=True,
-        verbose_name="Location Type"
+        verbose_name="Location Type",
     )
     # vendor = tables.Column()
     vendor = tables.TemplateColumn(
@@ -109,7 +68,7 @@ class SambandTable(BaseTable):
             </a>
         """,
         orderable=True,
-        verbose_name="Vendor"
+        verbose_name="Vendor",
     )
     # transporttype = tables.Column()
     transporttype = tables.TemplateColumn(
@@ -129,8 +88,8 @@ class SambandTable(BaseTable):
                 <span class="text-muted">None</span>
             {% endfor %}
         """,
-        orderable=True,
-        verbose_name="Parent Circuit",
+        orderable=False,
+        verbose_name="Parent",
     )
 
     graph = tables.TemplateColumn(
@@ -140,9 +99,9 @@ class SambandTable(BaseTable):
         </a>
         """,
         orderable=False,
-        verbose_name="Graph"
+        verbose_name="Graph",
     )
-    
+
     # Add a custom map button column
     map = tables.TemplateColumn(
         template_code="""
@@ -151,18 +110,8 @@ class SambandTable(BaseTable):
         </a>
         """,
         orderable=False,
-        verbose_name="Map"
+        verbose_name="Map",
     )
-
-    
-    actions = ButtonsColumn(
-        models.Samband,
-        # Option for modifying the default action buttons on each row:
-        buttons=("changelog", "edit", "delete"),
-        # Option for modifying the pk for the action buttons:
-        pk_field="pk",
-    )
-
 
     class Meta(BaseTable.Meta):
         """Meta attributes."""
@@ -179,7 +128,4 @@ class SambandTable(BaseTable):
             "parents",
             "map",
             "graph",
-            "actions",
-
         )
-

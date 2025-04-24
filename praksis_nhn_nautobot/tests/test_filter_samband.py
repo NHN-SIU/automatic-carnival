@@ -24,7 +24,7 @@ class SambandFilterTestCase(TestCase):
 
     def test_filter_by_status(self):
         """Filter by status 'Planned'."""
-        params = {"status": "Planned"}
+        params = {"status": ["Planned"]}
         qs = self.filterset(params, models.Samband.objects.all()).qs
         self.assertEqual(qs.count(), 1)
         self.assertEqual(qs.first().status, "Planned")
