@@ -295,7 +295,7 @@ class SambandGraphView(generic.View):
         return filterset.qs
     
     def get_context_data(self, **kwargs):
-        """Add graph data to the context."""
+        """Add graph data to the context using Serializer from API and graph service module."""
         context = {}
         queryset = self.get_queryset()
 

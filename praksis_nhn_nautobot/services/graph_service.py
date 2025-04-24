@@ -2,8 +2,9 @@
 
 from collections import deque
 
-from praksis_nhn_nautobot.models import Samband
+import networkx as nx
 
+from praksis_nhn_nautobot.models import Samband
 
 class SambandGraphService:
     """Service to handle Samband graph data and html generation."""
@@ -19,7 +20,6 @@ class SambandGraphService:
         Returns:
             dict: JSON data with nodes and links for graph visualization
         """
-        import networkx as nx
 
         # Create a directed graph
         G = nx.DiGraph()
@@ -53,7 +53,7 @@ class SambandGraphService:
         # # Convert NetworkX graph to Vis.js format
         nodes = []
         for node_id, node_attrs in G.nodes(data=True):
-            # Create the node object with ID and all attributes
+            # Create the node object with ID and some important attributes
             node = {
                 "id": node_id,
                 "label": node_attrs.get("name", f"Node {node_id}"),
@@ -78,6 +78,20 @@ class SambandGraphService:
 
     @classmethod
     def get_relations(cls, instance, depth=2):
+        """
+        Get both parent and child relations for a Samband instance.
+        
+        This method traverses the graph in both directions (upward and downward)
+        to find all related Samband instances within the specified depth.
+        
+        Args:
+            instance (Samband): The Samband instance to get relations for
+            depth (int, optional): How many levels to traverse in each direction. Defaults to 2.
+            
+        Returns:
+            list: A combined list containing the original instance, its parents, 
+                and its children up to the specified depth
+        """
         parents = cls._traverse_graph(instance, depth, direction="up")
         children = cls._traverse_graph(instance, depth, direction="down")
         return [instance] + parents + children
