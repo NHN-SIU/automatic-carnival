@@ -106,12 +106,6 @@ invoke tests
 
 ### Map Feature
 
-Absolutely — here's a shorter, more to-the-point version suitable for technical documentation:
-
----
-
-### Map Implementation
-
 The map is built with **[Leaflet](https://leafletjs.com/)**, a client-side JavaScript library for interactive maps. Leaflet handles map interaction (e.g., panning, zooming, placing markers), but requires an external **tilemap** source for the actual map visuals.
 
 This project uses **[OpenStreetMap](https://wiki.openstreetmap.org/)** as the tile provider. OpenStreetMap is free and open-source. An internet connection is required to fetch tiles, but tiles can be downloaded for offline use, it is crazy large: https://wiki.openstreetmap.org/wiki/Downloading_data
