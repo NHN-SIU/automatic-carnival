@@ -1,18 +1,22 @@
 """Menu items."""
 
-from nautobot.apps.ui import NavMenuAddButton, NavMenuGroup, NavMenuItem, NavMenuTab
+from nautobot.apps.ui import NavMenuGroup, NavMenuItem, NavMenuTab
 
 items = (
     NavMenuItem(
         link="plugins:praksis_nhn_nautobot:samband_list",
-        name="Praksis NHN Nautobot",
+        name="Table View",
         permissions=["praksis_nhn_nautobot.view_samband"],
-        buttons=(
-            NavMenuAddButton(
-                link="plugins:praksis_nhn_nautobot:samband_add",
-                permissions=["praksis_nhn_nautobot.add_samband"],
-            ),
-        ),
+    ),
+    NavMenuItem(
+        link="plugins:praksis_nhn_nautobot:samband_client_map",
+        name="Map View",
+        permissions=["praksis_nhn_nautobot.view_samband"],
+    ),
+    NavMenuItem(
+        link="plugins:praksis_nhn_nautobot:samband_graph",
+        name="Graph View",
+        permissions=["praksis_nhn_nautobot.view_samband"],
     ),
 )
 
