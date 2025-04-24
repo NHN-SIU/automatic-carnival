@@ -106,6 +106,26 @@ invoke tests
 
 ### Map Feature
 
+Absolutely — here's a shorter, more to-the-point version suitable for technical documentation:
+
+---
+
+### Map Implementation
+
+The map is built with **[Leaflet](https://leafletjs.com/)**, a client-side JavaScript library for interactive maps. Leaflet handles map interaction (e.g., panning, zooming, placing markers), but requires an external **tilemap** source for the actual map visuals.
+
+This project uses **[OpenStreetMap](https://wiki.openstreetmap.org/)** as the tile provider. OpenStreetMap is free and open-source. An internet connection is required to fetch tiles, but tiles can be downloaded for offline use, it is crazy large: https://wiki.openstreetmap.org/wiki/Downloading_data
+
+1. Filters are fetched from the server.
+2. Filtered point data is requested via API. So the site would work fine as long as it gets the right data via API
+3. Leaflet plots points on the map using markers.
+4. **Font Awesome** is used for marker icons.
+
+Notes:
+
+- **Folium** was tested but not used due to server-side rendering. Leaflet was chosen for full client-side control and better performance.
+
+
 ### Graph feature
 
 Refer to [graph.md](docs/graph.md).
