@@ -3,6 +3,7 @@
 from collections import deque
 
 from praksis_nhn_nautobot.models import Samband
+import networkx as nx
 
 
 class SambandGraphService:
@@ -19,8 +20,6 @@ class SambandGraphService:
         Returns:
             dict: JSON data with nodes and links for graph visualization
         """
-        import networkx as nx
-
         # Create a directed graph
         G = nx.DiGraph()
 

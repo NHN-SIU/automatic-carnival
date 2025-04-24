@@ -273,7 +273,6 @@ class SambandGraphFocusView(generic.ObjectView):
 
         return context
 
-
 class SambandGraphView(generic.View):
     """Graph visualization for Samband."""
 
@@ -348,7 +347,6 @@ class SambandGraphView(generic.View):
         context["network_options"] = options
 
         return context
-
 
 def parse_geo_coordinates(geo_string):
     """Parse geographic coordinates in various formats."""

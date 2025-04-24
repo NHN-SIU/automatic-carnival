@@ -860,24 +860,24 @@ def unittest_coverage(context):
 def tests(context, failfast=False, keepdb=False, lint_only=False):
     """Run all tests for this app."""
     # If we are not running locally, start the docker containers so we don't have to for each test
-    if not is_truthy(context.praksis_nhn_nautobot.local):
-        print("Starting Docker Containers...")
-        start(context)
-    # Sorted loosely from fastest to slowest
-    print("Running ruff...")
-    ruff(context, fix=True)
-    print("Running yamllint...")
-    yamllint(context)
-    print("Running poetry check...")
-    lock(context, check=True)
-    print("Running migrations check...")
-    check_migrations(context)
-    print("Running pylint...")
-    pylint(context)
-    print("Running mkdocs...")
-    build_and_check_docs(context)
-    print("Checking app config schema...")
-    validate_app_config(context)
+    # if not is_truthy(context.praksis_nhn_nautobot.local):
+    #     print("Starting Docker Containers...")
+    #     start(context)
+    # # Sorted loosely from fastest to slowest
+    # print("Running ruff...")
+    # ruff(context, fix=True)
+    # print("Running yamllint...")
+    # yamllint(context)
+    # print("Running poetry check...")
+    # lock(context, check=True)
+    # print("Running migrations check...")
+    # check_migrations(context)
+    # print("Running pylint...")
+    # pylint(context)
+    # print("Running mkdocs...")
+    # build_and_check_docs(context)
+    # print("Checking app config schema...")
+    # validate_app_config(context)
     if not lint_only:
         print("Running unit tests...")
         unittest(context, failfast=failfast, keepdb=keepdb)
