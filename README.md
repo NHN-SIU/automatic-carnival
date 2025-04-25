@@ -20,7 +20,7 @@ Below is an overview of the key files and their purposes:
 | ├── Dockerfile:                   Defines the Docker image used to containerize the application.  
 | └── nautobot_config.py:           Configuration file for Nautobot.  
 |  
-├── praksis_nhn_nautobot/       Main Django app for managing NHN-related logic and interfaces.
+├── praksis_nhn_nautobot/       Main Django app for managing NHN-related logic and interfaces.  
 | ├── api/  
 | | ├── serializers.py:         Defines how data is serialized/deserialized for API input/output.  
 | | ├── urls.py:                Maps API URL endpoints to view functions or classes.  
