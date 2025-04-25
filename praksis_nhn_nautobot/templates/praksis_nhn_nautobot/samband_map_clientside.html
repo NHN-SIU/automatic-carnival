@@ -10,8 +10,7 @@
   <div class="sidebar-left">
     <!-- <a href="{% url 'plugins:praksis_nhn_nautobot:samband_list' %}" class="btn btn-outline-secondary">Back to List</a> -->
     <a id="back-to-list-link" href="{% url 'plugins:praksis_nhn_nautobot:samband_list' %}" class="btn btn-outline-secondary">View selection in list</a>
-    <a href="{% url 'plugins:praksis_nhn_nautobot:samband_graph' %}?{{ request.GET.urlencode }}" class="btn btn-outline-secondary">View selection in graph</a>
-    <!-- Scrollable filter content -->
+    <a id="graph-view-link" href="{% url 'plugins:praksis_nhn_nautobot:samband_graph' %}" class="btn btn-outline-secondary">View selection in graph</a>
     <div class="filter-container">
       <h5 class="filter-heading">Filter Connections</h5>
       

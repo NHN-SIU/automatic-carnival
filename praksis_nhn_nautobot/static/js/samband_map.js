@@ -630,20 +630,27 @@ document.addEventListener('DOMContentLoaded', function() {
     function updateNavigationLinks() {
       const params = last_used_params || '';
       
-      // Update the "Back to List" link
+      // Add debug logging to check elements
       const listLink = document.getElementById('back-to-list-link');
+      console.log("List link found:", !!listLink);
+      
+      const graphLink = document.getElementById('graph-view-link');
+      console.log("Graph link found:", !!graphLink);
+      
+      // Update the "Back to List" link
       if (listLink) {
         const listBaseUrl = listLink.getAttribute('href').split('?')[0];
         listLink.href = params ? `${listBaseUrl}?${params}` : listBaseUrl;
       }
       
-      // Update the "View selection in graph" link
-      const graphLink = document.querySelector('a[href*="samband_graph"]');
+      // Update the "View selection in graph" link - use ID instead of selector
       if (graphLink) {
         const graphBaseUrl = graphLink.getAttribute('href').split('?')[0];
         graphLink.href = params ? `${graphBaseUrl}?${params}` : graphBaseUrl;
-        graphLink.id = 'graph-view-link'; // Add an ID for easier future reference
+        console.log("Updated graph link to:", graphLink.href);
       }
+      
+      console.log("Updated navigation links with params:", params);
     }
   
     /**
