@@ -171,7 +171,8 @@ This project uses **[OpenStreetMap](https://wiki.openstreetmap.org/)** as the ti
 
 Notes:
 
-- **Folium** was tested but not used due to server-side rendering. Leaflet was chosen for full client-side control and better performance.
+**Folium** was tested but not used due to server-side rendering. Leaflet was chosen for full client-side control and better performance.
+
 
 ### Graph feature
 
@@ -182,6 +183,9 @@ Then the graph is rendered on the frontend using **[Vis.js](https://visjs.org/)*
 For more details (Norwegian), refer to [graph.md](docs/graph.md).
 
 ## Known Issues / Limitations
+Searching in the list and then going to the map will not work. the url will add "q="..."", this is not supported by the api. Only the filters that are listed in map view is supported.
+
+Use my location button does not work, gives seemingly random locations
 
 - The filtering in the individual graph view to table/map does not work, because the graph view implements a custom fetching function for the hierarchy for a given node. Now, the filters in table and map view gets passed on as URL-params to the other views. We have seen on the possibility to store the instances currently in the view in cache to pass them on to the different views, but have not comed to a definitive solution.
 
@@ -200,7 +204,7 @@ For more details (Norwegian), refer to [graph.md](docs/graph.md).
 - In the individual graph view, the backend fetches the relations for a node for a given depth. It may have been benefitial to allow toggling for further hierarchy when a node is clicked.
 
 ## Future Work / TODO
-
+Show the graph/hierarchy on the map.
 - Create a unified filter system that works across all views.
 
 ### Graph view
