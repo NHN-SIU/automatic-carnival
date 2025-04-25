@@ -4,9 +4,8 @@ document.addEventListener('DOMContentLoaded', function() {
     // Status colors
     const statusColors = {
       'Active': '#4CAF50',     // Green
-      'Planned': '#FFC107',    // Yellow/Amber
+      'Planned': '#FFC107',    // Yellow
       'Decommissioned': '#F44336', // Red
-      'Planning': '#FFC107',   // Yellow
       'Unknown': '#9E9E9E'     // Grey (fallback)
     };
     
@@ -15,7 +14,6 @@ document.addEventListener('DOMContentLoaded', function() {
       'Active': 'bg-success',
       'Planned': 'bg-warning',
       'Decommissioned': 'bg-danger',
-      'Planning': 'bg-warning',
       'Unknown': 'bg-secondary'
     };
     
@@ -57,7 +55,6 @@ document.addEventListener('DOMContentLoaded', function() {
       
       // Add base map layer
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
         maxZoom: 19
       }).addTo(map);
       
@@ -72,8 +69,6 @@ document.addEventListener('DOMContentLoaded', function() {
         color: '#3186cc'
       };
       
-      // Override the color to ensure points A and B are always visually distinct
-      // Even if they have the same location type
       const iconColor = isPointA ? POINT_A_COLOR : POINT_B_COLOR;
       
       return L.divIcon({
@@ -108,7 +103,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const bounds = [];
       const statusColor = statusColors[data.status] || statusColors.Unknown;
       
-      // Use the coordinates directly from our simplified API response
+      // Use the coordinates directly from simplified API response
       const pointACoords = data.pop_a_coords;
       const pointBCoords = data.pop_b_coords;
       

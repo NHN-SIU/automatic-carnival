@@ -63,7 +63,7 @@ class SambandTable(BaseTable):
     # vendor = tables.Column()
     vendor = tables.TemplateColumn(
         template_code="""
-            <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?vendors={{ record.vendor|urlencode }}" title="View all connections for: {{ record.vendor }}">
+            <a href="{% url 'plugins:praksis_nhn_nautobot:samband_client_map' %}?vendor={{ record.vendor|urlencode }}" title="View all connections for: {{ record.vendor }}">
                 {{ record.vendor }}
             </a>
         """,
