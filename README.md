@@ -140,6 +140,9 @@ To invoke the tests in 'praksis_nhn_nautobot/tests/' run this command:
 invoke tests
 ```
 
+By default, this command runs several checks, including ruff, yamllint, poetry, and others, in addition to the unit tests.  
+If you want to run **only the unit tests**, it is recommended to temporarily comment out the other checks in tasks.py (around line 860) before executing the command.  
+
 ## Features
 
 ### List feature
