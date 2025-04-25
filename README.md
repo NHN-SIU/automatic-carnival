@@ -6,42 +6,42 @@
 
 ### Project Structure
 
-Below is an overview of the key files and their purposes:
+Below is an overview of the key files and their purposes:  
 
-├── development/
-| ├── app_config_schema.py: Defines the schema for application configuration.
-| ├── creds.env: Stores sensitive environment variables like API keys and database credentials.
-| ├── development.env: Contains environment-specific settings for development purposes.
-| ├── docker-compose.base.yml: Base configuration for Docker Compose.
-| ├── docker-compose.dev.yml: Docker Compose configuration for development.
-| ├── docker-compose.mysql.yml: Docker Compose configuration for MySQL database.
-| ├── docker-compose.postgres.yml: Docker Compose configuration for PostgreSQL database.
-| ├── docker-compose.redis.yml: Docker Compose configuration for Redis.
-| ├── Dockerfile: Defines the Docker image used to containerize the application.
-| └── nautobot_config.py: Configuration file for Nautobot.
-|
-├── praksis_nhn_nautobot/
-| ├── api/
-| | ├── serializers.py: Defines how data is serialized/deserialized for API input/output.
-| | ├── urls.py: Maps API URL endpoints to view functions or classes.
-| | └── views.py: Handles the logic for processing API requests and returning responses.
-| ├── migrations/: Contains database migration files.
-| ├── services/: Contains service layer logic for the application.
-| ├── static/: Directory for static files like CSS, JavaScript, and images.
-| ├── templates/
-| | └── praksis_nhn_nautobot/: Directory for HTML templates.
-| ├── tests/: Contains unit and integration tests for the project.
-| ├── filters.py: Defines filters for querying data.
-| ├── forms.py: Contains form definitions for user input.
-| ├── models.py: Defines the database models for the application.
-| ├── navigation.py: Handles navigation-related logic.
-| ├── tables.py: Defines table structures for displaying data.
-| ├── urls.py: Maps URL patterns to views.
-| └── views.py: Contains view logic for rendering templates and handling requests.
-|
-├── test_data/: Directory containing sample data for testing and populating the application.
-├── tasks.py: Defines custom tasks for the project.
-├── README.md: Documentation file for the project.
+├── development/  
+| ├── app_config_schema.py: Defines the schema for application configuration.  
+| ├── creds.env: Stores sensitive environment variables like API keys and database credentials.  
+| ├── development.env: Contains environment-specific settings for development purposes.  
+| ├── docker-compose.base.yml: Base configuration for Docker Compose.  
+| ├── docker-compose.dev.yml: Docker Compose configuration for development.  
+| ├── docker-compose.mysql.yml: Docker Compose configuration for MySQL database.  
+| ├── docker-compose.postgres.yml: Docker Compose configuration for PostgreSQL database.   
+| ├── docker-compose.redis.yml: Docker Compose configuration for Redis.  
+| ├── Dockerfile: Defines the Docker image used to containerize the application.  
+| └── nautobot_config.py: Configuration file for Nautobot.  
+|  
+├── praksis_nhn_nautobot/  
+| ├── api/  
+| | ├── serializers.py: Defines how data is serialized/deserialized for API input/output.  
+| | ├── urls.py: Maps API URL endpoints to view functions or classes.  
+| | └── views.py: Handles the logic for processing API requests and returning responses.  
+| ├── migrations/: Contains database migration files.  
+| ├── services/: Contains service layer logic for the application.  
+| ├── static/: Directory for static files like CSS, JavaScript, and images.  
+| ├── templates/  
+| | └── praksis_nhn_nautobot/: Directory for HTML templates.    
+| ├── tests/: Contains unit and integration tests for the project.    
+| ├── filters.py: Defines filters for querying data.  
+| ├── forms.py: Contains form definitions for user input.  
+| ├── models.py: Defines the database models for the application.  
+| ├── navigation.py: Handles navigation-related logic.  
+| ├── tables.py: Defines table structures for displaying data.  
+| ├── urls.py: Maps URL patterns to views.  
+| └── views.py: Contains view logic for rendering templates and handling requests.  
+|  
+├── test_data/: Directory containing sample data for testing and populating the application.  
+├── tasks.py: Defines custom tasks for the project.  
+├── README.md: Documentation file for the project.  
 
 ## 2. Getting started
 
