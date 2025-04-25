@@ -153,6 +153,7 @@ Key functionalities:
 
 ### Map Feature
 
+´
 The map is built with **[Leaflet](https://leafletjs.com/)**, a client-side JavaScript library for interactive maps. Leaflet handles map interaction (e.g., panning, zooming, placing markers), but requires an external **tilemap** source for the actual map visuals.
 
 This project uses **[OpenStreetMap](https://wiki.openstreetmap.org/)** as the tile provider. OpenStreetMap is free and open-source. An internet connection is required to fetch tiles, but tiles can be downloaded for offline use, it is crazy large: https://wiki.openstreetmap.org/wiki/Downloading_data
@@ -176,10 +177,26 @@ For more details (Norwegian), refer to [graph.md](docs/graph.md).
 
 ## Known Issues / Limitations
 
+- The filtering in the individual graph view to table/map does not work, because the graph view implements a custom fetching function for the hierarchy for a given node. Now, the filters in table and map view gets passed on as URL-params to the other views. We have seen on the possibility to store the instances currently in the view in cache to pass them on to the different views, but have not comed to a definitive solution.
+
 ### List feature
 
 - The list view only supports filtering by **one field value at a time**.
   - For example, it is **not possible** to filter for `samband` located in **both "Bergen" and "Oslo"** simultaneously.
   - In contrast, the **map view** supports multi-value filtering.
 
+### Graph feature
+
+- The spacing of nodes are decided by the physics module, and it based on the radius of the node. This means that the label/text underneath is not a part of the spacing, which may lead to overlapping text between nodes, espescially when many labels are enabled.
+- The "graph view" button in the sidebar fetches all the Samband instances. This means that for a very large number of instances, the layout may become cluttered and slow.
+- In the individual graph view, the backend fetches the relations for a node for a given depth. It may have been benefitial to allow toggling for further hierarchy when a node is clicked.
+
 ## Future Work / TODO
+
+- Create a unified filter system that works across all views.
+
+### Graph view
+
+- Small bug: in individual graph view, when you hover over the main node in orange, it changes color to the dark blue that would otherwise be applied to the other nodes. It should still be in the orange color.
+- It would be cool to add search capability to locate and highlight specific nodes in the graph
+- Implement path-finding to show connections between node X and Y
