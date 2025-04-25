@@ -7,8 +7,6 @@
 
 ## 1. Overview
 
-(table of content)?
-
 ### Project Structure
 
 Below is an overview of the key files and their purposes:  
