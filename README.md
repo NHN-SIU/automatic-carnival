@@ -6,44 +6,42 @@
 
 ### Project Structure
 
-Below is an overview of the key files and their purposes:
+Below is an overview of the key files and their purposes:  
 
-├── development/
-| ├── app_config_schema.py: Defines the schema for application configuration.
-| ├── creds.env: Stores sensitive environment variables like API keys and database credentials.
-| ├── development.env: Contains environment-specific settings for development purposes.
-| ├── docker-compose.base.yml: Base configuration for Docker Compose.
-| ├── docker-compose.dev.yml: Docker Compose configuration for development.
-| ├── docker-compose.mysql.yml: Docker Compose configuration for MySQL database.
-| ├── docker-compose.postgres.yml: Docker Compose configuration for PostgreSQL database.
-| ├── docker-compose.redis.yml: Docker Compose configuration for Redis.
-| ├── Dockerfile: Defines the Docker image used to containerize the application.
-| └── nautobot_config.py: Configuration file for Nautobot.
-
-├── nautobot-plugin-praksis/: Directory for the Nautobot plugin implementation.
-
-├── praksis_nhn_nautobot/
-| ├── api/
-| | ├── serializers.py: Defines how data is serialized/deserialized for API input/output.
-| | ├── urls.py: Maps API URL endpoints to view functions or classes.
-| | └── views.py: Handles the logic for processing API requests and returning responses.
-| ├── migrations/: Contains database migration files.
-| ├── services/: Contains service layer logic for the application.
-| ├── static/: Directory for static files like CSS, JavaScript, and images.
-| ├── templates/
-| | └── praksis_nhn_nautobot/: Directory for HTML templates.
-| ├── tests/: Contains unit and integration tests for the project.
-| ├── filters.py: Defines filters for querying data.
-| ├── forms.py: Contains form definitions for user input.
-| ├── models.py: Defines the database models for the application.
-| ├── navigation.py: Handles navigation-related logic.
-| ├── tables.py: Defines table structures for displaying data.
-| ├── urls.py: Maps URL patterns to views.
-| └── views.py: Contains view logic for rendering templates and handling requests.
-
-├── test_data/: Directory containing sample data for testing and populating the application.
-├── tasks.py: Defines custom tasks for the project.
-├── README.md: Documentation file for the project.
+├─── development/  
+│    ├─── app_config_schema.py:         Defines the schema for application configuration.  
+│    ├─── creds.env:                    Stores sensitive environment variables like API keys and database credentials.  
+│    ├─── development.env:              Contains environment-specific settings for development purposes.  
+│    ├─── docker-compose.base.yml:      Base configuration for Docker Compose.  
+│    ├─── docker-compose.dev.yml:       Docker Compose configuration for development.  
+│    ├─── docker-compose.mysql.yml:     Docker Compose configuration for MySQL database.  
+│    ├─── docker-compose.postgres.yml:  Docker Compose configuration for PostgreSQL database.   
+│    ├─── docker-compose.redis.yml:     Docker Compose configuration for Redis.  
+│    ├─── Dockerfile:                   Defines the Docker image used to containerize the application.  
+│    └─── nautobot_config.py:           Configuration file for Nautobot.  
+|  
+├─── praksis_nhn_nautobot/              Main Django app for managing NHN-related logic and interfaces.  
+│    ├─── api/  
+|    |    ├─── serializers.py:          Defines how data is serialized/deserialized for API input/output.  
+|    |    ├─── urls.py:                 Maps API URL endpoints to view functions or classes.  
+|    |    └─── views.py:                Handles the logic for processing API requests and returning responses.  
+│    ├─── migrations/:                  Contains database migration files.  
+│    ├─── services/:                    Contains service layer logic for the application.  
+│    ├─── static/:                      Directory for static files like CSS, JavaScript, and images.  
+│    ├─── templates/  
+|    |    └─── praksis_nhn_nautobot/:   Directory for HTML templates.    
+│    ├─── tests/:                       Contains unit and integration tests for the project.    
+│    ├─── filters.py:                   Defines filters for querying data.  
+│    ├─── forms.py:                     Contains form definitions for user input.  
+│    ├─── models.py:                    Defines the database models for the application.  
+│    ├─── navigation.py:                Handles navigation-related logic.  
+│    ├─── tables.py:                    Defines table structures for displaying data.  
+│    ├─── urls.py:                      Maps URL patterns to views.  
+│    └─── views.py:                     Contains view logic for rendering templates and handling requests.  
+|  
+├─── test_data/:                 Directory containing sample data for testing and populating the application.  
+├─── tasks.py:                   Defines custom tasks for the project.  
+├─── README.md:                  Documentation file for the project.  
 
 ## 2. Getting started
 
@@ -146,10 +144,18 @@ The list view provides a textual representation of `samband` entries, including 
 Key functionalities:
 
 1. Display a list of samband with relevant metadata.
-2. Direct links to switch to map or graph view for a specific samband.
-3. Filtering functionality based on a single field value at a time.
+1. Filtering functionality based on a single field value at a time.
+1. Switch to map or graph with the specific samband filtered upon.
 
 **Note:** Unlike the map view, the list does not currently support filtering by multiple values in the same field (e.g., showing samband in both **"Bergen"** and **"Oslo"** at the same time).
+
+### Single samband fetaure
+This feature can be used by clicking a specific samband in the samband list
+1. View information of a specific samband
+1. Direct links to switch to map or graph view for a specific samband.
+1. Advanced settings
+1. Notes
+1. Change Log
 
 ### Map Feature
 
@@ -179,11 +185,13 @@ For more details (Norwegian), refer to [graph.md](docs/graph.md).
 
 - The filtering in the individual graph view to table/map does not work, because the graph view implements a custom fetching function for the hierarchy for a given node. Now, the filters in table and map view gets passed on as URL-params to the other views. We have seen on the possibility to store the instances currently in the view in cache to pass them on to the different views, but have not comed to a definitive solution.
 
-### List feature
+### Limitations of list feature
 
 - The list view only supports filtering by **one field value at a time**.
   - For example, it is **not possible** to filter for `samband` located in **both "Bergen" and "Oslo"** simultaneously.
   - In contrast, the **map view** supports multi-value filtering.
+- Upon filtering through "search bar", switching to map or graph doesn't work
+ - Samband filters is passed through the url, but the "search" filter is not compatible with the current map/graph implementatio
 
 ### Graph feature
 
