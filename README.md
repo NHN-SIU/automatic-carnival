@@ -1,5 +1,10 @@
 # Documentation – Intern Project from UiT, Spring 2025
 
+**Interns:**
+    Gard Schive             - Map
+    Lars Moen Storvik       - List
+    Marius Solaas           - Graph
+
 ## 1. Overview
 
 (table of content)?
