@@ -19,9 +19,7 @@ Below is an overview of the key files and their purposes:
 | ├── docker-compose.redis.yml: Docker Compose configuration for Redis.
 | ├── Dockerfile: Defines the Docker image used to containerize the application.
 | └── nautobot_config.py: Configuration file for Nautobot.
-
-├── nautobot-plugin-praksis/: Directory for the Nautobot plugin implementation.
-
+|
 ├── praksis_nhn_nautobot/
 | ├── api/
 | | ├── serializers.py: Defines how data is serialized/deserialized for API input/output.
@@ -40,7 +38,7 @@ Below is an overview of the key files and their purposes:
 | ├── tables.py: Defines table structures for displaying data.
 | ├── urls.py: Maps URL patterns to views.
 | └── views.py: Contains view logic for rendering templates and handling requests.
-
+|
 ├── test_data/: Directory containing sample data for testing and populating the application.
 ├── tasks.py: Defines custom tasks for the project.
 ├── README.md: Documentation file for the project.
@@ -146,10 +144,18 @@ The list view provides a textual representation of `samband` entries, including 
 Key functionalities:
 
 1. Display a list of samband with relevant metadata.
-2. Direct links to switch to map or graph view for a specific samband.
-3. Filtering functionality based on a single field value at a time.
+1. Filtering functionality based on a single field value at a time.
+1. Switch to map or graph with the specific samband filtered upon.
 
 **Note:** Unlike the map view, the list does not currently support filtering by multiple values in the same field (e.g., showing samband in both **"Bergen"** and **"Oslo"** at the same time).
+
+### Single samband fetaure
+This feature can be used by clicking a specific samband in the samband list
+1. View information of a specific samband
+1. Direct links to switch to map or graph view for a specific samband.
+1. Advanced settings
+1. Notes
+1. Change Log
 
 ### Map Feature
 
@@ -176,10 +182,12 @@ For more details (Norwegian), refer to [graph.md](docs/graph.md).
 
 ## Known Issues / Limitations
 
-### List feature
+### Limitations of list feature
 
 - The list view only supports filtering by **one field value at a time**.
   - For example, it is **not possible** to filter for `samband` located in **both "Bergen" and "Oslo"** simultaneously.
   - In contrast, the **map view** supports multi-value filtering.
+- Upon filtering through "search bar", switching to map or graph doesn't work
+ - Samband filters is passed through the url, but the "search" filter is not compatible with the current map/graph implementatio
 
 ## Future Work / TODO
